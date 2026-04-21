@@ -194,68 +194,68 @@ Módulo exclusivo de leitura — não escreve nada.
 ## 4. Esquema do banco de dados
 
 ### Convenções
-- Chaves primárias: `UUID` geradas pelo Postgres (`gen_random_uuid()`).
+- Chaves primárias: `UUID` geradas pelo Postgres (`uuidv7()`), ordenadas no tempo.
 - Timestamps: `created_at` e `updated_at` em todas as tabelas, gerenciados por trigger.
-- Soft delete: coluna `deleted_at TIMESTAMPTZ` nas tabelas com necessidade de auditoria
-  (`fontes`, `edicoes`, `paginas`).
+- Soft delete: coluna `deleted_at TIMESTAMPTZ` presente em todas as tabelas atuais para auditoria.
 - Todas as migrations são arquivos TypeScript gerenciados pelo Kysely Migrator.
 
 ### Tabelas
 
 ```sql
 -- Usuários
-CREATE TYPE users_roles_enum AS ENUM ('leitor', 'gestor');
+CREATE TYPE user_role AS ENUM ('reader', 'manager');
 
 CREATE TABLE users (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email       TEXT UNIQUE NOT NULL,
-  nome        TEXT NOT NULL,
-  senha_hash  TEXT NOT NULL,
-  role        users_roles_enum NOT NULL DEFAULT 'leitor',
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  id            UUID PRIMARY KEY DEFAULT uuidv7(),
+  email         VARCHAR(255) UNIQUE NOT NULL,
+  name          VARCHAR(255) NOT NULL,
+  password_hash TEXT NOT NULL,
+  role          user_role NOT NULL DEFAULT 'reader',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at    TIMESTAMPTZ DEFAULT NULL
 );
 
-
--- Acervos
-CREATE TABLE acervos (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  nome        TEXT NOT NULL,
-  descricao   TEXT,
-  instituicao TEXT,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+-- Coleções (Acervos)
+CREATE TABLE collections (
+  id           UUID PRIMARY KEY DEFAULT uuidv7(),
+  name         VARCHAR(255) NOT NULL,
+  description  VARCHAR(5000),
+  institution  VARCHAR(255),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
 
 -- Fontes (livros, revistas, jornais)
-CREATE TABLE fontes (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  acervo_id   UUID NOT NULL REFERENCES acervos(id),
-  nome        TEXT NOT NULL,
-  tipo        TEXT NOT NULL,         -- 'jornal' | 'revista' | 'livro'
-  idioma      TEXT NOT NULL,
-  metadata    JSONB NOT NULL DEFAULT '{}',  -- campos específicos por tipo
-  deleted_at  TIMESTAMPTZ,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE sources (
+  id            UUID PRIMARY KEY DEFAULT uuidv7(),
+  collection_id UUID NOT NULL REFERENCES collections(id),
+  name          VARCHAR(255) NOT NULL,
+  type          VARCHAR(10) NOT NULL CHECK (type IN ('newspaper', 'magazine', 'book')),
+  language      VARCHAR(50) NOT NULL,
+  metadata      JSONB NOT NULL DEFAULT '{}',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at    TIMESTAMPTZ DEFAULT NULL
 );
 
 -- Edições
-CREATE TABLE edicoes (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  fonte_id        UUID NOT NULL REFERENCES fontes(id),
-  numero          TEXT,
-  data_publicacao DATE,
-  observacoes     TEXT,
-  deleted_at      TIMESTAMPTZ,
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE editions (
+  id           UUID PRIMARY KEY DEFAULT uuidv7(),
+  source_id    UUID NOT NULL REFERENCES sources(id),
+  number       VARCHAR(50),
+  published_at DATE,
+  notes        VARCHAR(5000),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
 
--- Páginas
+-- Páginas (A implementar futuramente)
 CREATE TABLE paginas (
   id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  edicao_id            UUID NOT NULL REFERENCES edicoes(id),
+  edicao_id            UUID NOT NULL REFERENCES editions(id),
   numero               INTEGER NOT NULL,
   imagem_original_path TEXT NOT NULL,
   imagem_display_path  TEXT,
@@ -270,7 +270,7 @@ CREATE TABLE paginas (
   UNIQUE (edicao_id, numero)
 );
 
--- Histórico de jobs de OCR
+-- Histórico de jobs de OCR (A implementar futuramente)
 CREATE TABLE ocr_jobs (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pagina_id    UUID NOT NULL REFERENCES paginas(id),
@@ -286,16 +286,21 @@ CREATE TABLE ocr_jobs (
 ### Índices
 
 ```sql
-CREATE INDEX paginas_tsv_idx      ON paginas USING GIN (conteudo_tsv);
-CREATE INDEX paginas_edicao_idx   ON paginas (edicao_id);
-CREATE INDEX paginas_status_idx   ON paginas (ocr_status);
-CREATE INDEX edicoes_fonte_idx    ON edicoes (fonte_id);
-CREATE INDEX fontes_acervo_idx    ON fontes (acervo_id);
-CREATE INDEX fontes_tipo_idx      ON fontes (tipo);
-CREATE INDEX jwt_denylist_exp_idx ON jwt_denylist (expires_at);
+CREATE INDEX idx_collections_name      ON collections (name);
+CREATE INDEX idx_sources_collection_id ON sources (collection_id);
+CREATE INDEX idx_sources_type          ON sources (type);
+CREATE INDEX idx_sources_language      ON sources (language);
+CREATE INDEX idx_editions_source_id    ON editions (source_id);
+CREATE INDEX idx_editions_published_at ON editions (published_at);
+
+-- Futuros (quando implementados)
+CREATE INDEX paginas_tsv_idx           ON paginas USING GIN (conteudo_tsv);
+CREATE INDEX paginas_edicao_idx        ON paginas (edicao_id);
+CREATE INDEX paginas_status_idx        ON paginas (ocr_status);
+CREATE INDEX jwt_denylist_exp_idx      ON jwt_denylist (expires_at);
 ```
 
-### Trigger para tsvector
+### Trigger para tsvector (Páginas)
 
 ```sql
 CREATE OR REPLACE FUNCTION atualiza_tsv() RETURNS trigger AS $$
@@ -312,608 +317,14 @@ CREATE TRIGGER tgr_pagina_tsv
 ```
 
 > **Nota:** se o acervo tiver documentos em múltiplos idiomas, o dicionário do
-> `to_tsvector` deve ser dinâmico, lido de `fontes.idioma`. Manter como `'portuguese'`
+> `to_tsvector` deve ser dinâmico, lido de `sources.language`. Manter como `'portuguese'`
 > por ora e criar issue para revisão futura.
 
 ### Kysely — tipagem das tabelas
 
-O Kysely exige uma interface central que descreve o banco. Ela fica em
-`src/infra/database/types.ts` e é passada como generic na instância:
+Os tipos TypeScript do banco são gerados automaticamente a partir da introspecção real do esquema pelo `kysely-codegen`. Eles ficam no arquivo [`src/infra/database/types.ts`](../src/infra/database/types.ts) e a instância do Kysely é tipada com ele (`export const db = new Kysely<DB>(...)`).
 
-```typescript
-// src/infra/database/types.ts
-import type { Generated, Insertable, Selectable, Updateable } from 'kysely'
-
-export interface UsersTable {
-  id: Generated<string>
-  email: string
-  nome: string
-  senha_hash: string
-  role: 'leitor' | 'gestor'
-  created_at: Generated<Date>
-  updated_at: Generated<Date>
-}
-
-// ... demais tabelas seguem o mesmo padrão
-
-export interface Database {
-  users: UsersTable
-  jwt_denylist: JwtDenylistTable
-  acervos: AcervosTable
-  fontes: FontesTable
-  edicoes: EdicoesTable
-  paginas: PaginasTable
-  ocr_jobs: OcrJobsTable
-}
-
-// Tipos derivados por tabela — usar nos services e repositórios
-export type User = Selectable<UsersTable>
-export type NewUser = Insertable<UsersTable>
-export type UserUpdate = Updateable<UsersTable>
+**Para regenerar os tipos (após rodar uma nova migration):**
+```sh
+bun run db:codegen
 ```
-
-```typescript
-// src/infra/database/client.ts
-import { Kysely, PostgresDialect } from 'kysely'
-import { Pool } from 'pg'
-import type { Database } from './types'
-
-export const db = new Kysely<Database>({
-  dialect: new PostgresDialect({
-    pool: new Pool({ connectionString: process.env.DATABASE_URL }),
-  }),
-})
-```
-
-### Kysely — migrations
-
-As migrations ficam em `src/infra/database/migrations/` como arquivos TypeScript com
-a interface `Migration` do Kysely (`up` e `down`). O Migrator é executado via script:
-
-```typescript
-// scripts/migrate.ts
-import { Migrator, FileMigrationProvider } from 'kysely'
-import { db } from '../src/infra/database/client'
-
-const migrator = new Migrator({ db, provider: new FileMigrationProvider({ ... }) })
-await migrator.migrateToLatest()
-```
-
----
-
-## 5. Container de DI (Awilix)
-
-O container é configurado em `src/container.ts`. A abordagem é injeção via construtor
-com `InjectionMode.CLASSIC` — sem decorators mágicos, explícito e fácil de ler para
-novos desenvolvedores.
-
-```typescript
-// src/container.ts
-import { createContainer, asClass, asValue, InjectionMode } from 'awilix'
-import { db } from './infra/database/client'
-import { LocalStorageAdapter } from './infra/storage/local.adapter'
-
-import { AuthRepository } from './modules/auth/auth.repository'
-import { AuthService } from './modules/auth/auth.service'
-// ... demais imports
-
-export function buildContainer() {
-  const container = createContainer({ injectionMode: InjectionMode.CLASSIC })
-
-  container.register({
-    // Infraestrutura
-    db:             asValue(db),
-    storageAdapter: asClass(LocalStorageAdapter).singleton(),
-
-    // Repositórios
-    authRepository:   asClass(AuthRepository).scoped(),
-    acervoRepository: asClass(AcervoRepository).scoped(),
-    fonteRepository:  asClass(FonteRepository).scoped(),
-    edicaoRepository: asClass(EdicaoRepository).scoped(),
-    paginaRepository: asClass(PaginaRepository).scoped(),
-
-    // Services
-    authService:   asClass(AuthService).scoped(),
-    acervoService: asClass(AcervoService).scoped(),
-    fonteService:  asClass(FonteService).scoped(),
-    edicaoService: asClass(EdicaoService).scoped(),
-    paginaService: asClass(PaginaService).scoped(),
-    buscaService:  asClass(BuscaService).scoped(),
-  })
-
-  return container
-}
-```
-
-Cada request recebe um escopo próprio via middleware:
-
-```typescript
-// src/shared/middleware/container.middleware.ts
-export function containerMiddleware(req, _res, next) {
-  req.container = container.createScope()
-  next()
-}
-```
-
-Cada service recebe suas dependências via construtor:
-
-```typescript
-export class EdicaoService {
-  constructor(
-    private readonly edicaoRepository: EdicaoRepository,
-    private readonly storageAdapter: IStorageAdapter,
-  ) {}
-}
-```
-
----
-
-## 6. Ports e adapters nos repositórios
-
-Cada módulo define sua própria interface de repositório (port) junto ao código de
-domínio. A implementação concreta com Kysely (adapter) fica no arquivo separado.
-O service depende apenas da interface — nunca da classe concreta.
-As operações que um repository disponibiliza devem serem criadas a partir da necessidade do service e não o contrário. Podemos ter operações que parece, operações de banco, como findById, findAll, mas estas devem ser pensadas a partir do contexto que o service precisa. Por exemplo, em vez de termos um método sofDelete, temos um método deleteById. O propósito é o mesmo, mas, o significado, mais profundo.
-
-```typescript
-// src/modules/fonte/fonte.repository.port.ts
-import type { Fonte, NewFonte, FonteUpdate, ListFontesFilter } from './fonte.types'
-
-export interface IFonteRepository {
-  findById(id: string): Promise<Fonte | undefined>
-  findMany(filter: ListFontesFilter): Promise<Fonte[]>
-  create(data: NewFonte): Promise<Fonte>
-  update(id: string, data: FonteUpdate): Promise<Fonte>
-  deleteById(id: string): Promise<void>
-}
-```
-
-```typescript
-// src/modules/fonte/fonte.repository.ts
-import type { Kysely } from 'kysely'
-import type { Database } from '../../infra/database/types'
-import type { IFonteRepository } from './fonte.repository.port'
-import type { Fonte, NewFonte, FonteUpdate, ListFontesFilter } from './fonte.types'
-
-export class FonteRepository implements IFonteRepository {
-  constructor(private readonly db: Kysely<Database>) {}
-
-  async findById(id: string): Promise<Fonte | undefined> {
-    return this.db
-      .selectFrom('fontes')
-      .selectAll()
-      .where('id', '=', id)
-      .where('deleted_at', 'is', null)
-      .executeTakeFirst()
-  }
-  // ...
-}
-```
-
-```typescript
-// src/modules/fonte/fonte.service.ts
-import type { IFonteRepository } from './fonte.repository.port'
-
-export class FonteService {
-  constructor(
-    private readonly fonteRepository: IFonteRepository,  // ← depende da interface
-  ) {}
-}
-```
-
-O Awilix resolve o vínculo: registra a classe concreta, mas o service recebe o tipo
-da interface por nome de parâmetro de construtor. Nos testes unitários, basta passar
-um objeto fake que satisfaça a interface — sem banco, sem Kysely.
-
----
-
-## 7. Interface de Storage (port)
-
-```typescript
-// src/infra/storage/storage.interface.ts
-export interface IStorageAdapter {
-  save(key: string, buffer: Buffer, mimeType: string): Promise<string>
-  get(key: string): Promise<Buffer>
-  delete(key: string): Promise<void>
-}
-```
-
-A implementação `LocalStorageAdapter` salva arquivos em disco e é suficiente para
-desenvolvimento e ambientes simples. A troca por outra implementação (S3, MinIO, etc.)
-é feita apenas em `container.ts`, sem impacto nos módulos.
-
----
-
-## 8. Tratamento de erros
-
-### Estrutura do erro
-
-Cada erro de aplicação carrega:
-
-- **`code`** — identificador único no formato `modulo.codigo_do_erro` (ex.:
-  `auth.invalid_credentials`, `fonte.not_found`). Permite que o frontend tome decisões
-  sem depender de strings de mensagem.
-- **`message`** — mensagem legível por humanos.
-- **`statusCode`** — código HTTP correspondente.
-- **`details`** — informações adicionais estruturadas opcionais (ex.: lista de campos
-  com erro de validação).
-- **`debug`** — informações de diagnóstico que **nunca devem ser expostas em produção**
-  (stack trace interno, query com erro, contexto da operação, etc.). O
-  `error.middleware.ts` omite esse campo quando `NODE_ENV !== 'development'`.
-
-```typescript
-// src/shared/errors/app-errors.ts
-
-export interface ErrorDetails {
-  [key: string]: unknown
-}
-
-export interface DebugInfo {
-  stack?: string
-  cause?: unknown
-  context?: Record<string, unknown>
-}
-
-export class AppError extends Error {
-  public readonly code: string
-  public readonly statusCode: number
-  public readonly details?: ErrorDetails
-  public readonly debug?: DebugInfo
-
-  constructor(params: {
-    code: string
-    message: string
-    statusCode: number
-    details?: ErrorDetails
-    debug?: DebugInfo
-  }) {
-    super(params.message)
-    this.name = 'AppError'
-    this.code = params.code
-    this.statusCode = params.statusCode
-    this.details = params.details
-    this.debug = params.debug
-  }
-}
-
-export class NotFoundError extends AppError {
-  constructor(resource: string, debug?: DebugInfo) {
-    super({
-      code: `${resource}.not_found`,
-      message: `${resource} não encontrado`,
-      statusCode: 404,
-      debug,
-    })
-  }
-}
-
-export class ForbiddenError extends AppError {
-  constructor(debug?: DebugInfo) {
-    super({
-      code: 'auth.forbidden',
-      message: 'Acesso não autorizado',
-      statusCode: 403,
-      debug,
-    })
-  }
-}
-
-export class UnauthorizedError extends AppError {
-  constructor(code = 'auth.unauthorized', debug?: DebugInfo) {
-    super({
-      code,
-      message: 'Autenticação necessária',
-      statusCode: 401,
-      debug,
-    })
-  }
-}
-
-export class ValidationError extends AppError {
-  constructor(message: string, details?: ErrorDetails, debug?: DebugInfo) {
-    super({
-      code: 'validation.invalid_input',
-      message,
-      statusCode: 400,
-      details,
-      debug,
-    })
-  }
-}
-
-export class ConflictError extends AppError {
-  constructor(code: string, message: string, debug?: DebugInfo) {
-    super({ code, message, statusCode: 409, debug })
-  }
-}
-
-export class InternalError extends AppError {
-  constructor(debug?: DebugInfo) {
-    super({
-      code: 'internal.unexpected_error',
-      message: 'Erro interno inesperado',
-      statusCode: 500,
-      debug,
-    })
-  }
-}
-```
-
-### Formato da resposta de erro
-
-```json
-{
-  "error": {
-    "code": "fonte.not_found",
-    "message": "fonte não encontrado",
-    "details": null,
-    "debug": { "context": { "fonteId": "abc-123" } }
-  }
-}
-```
-
-O campo `debug` é omitido quando `NODE_ENV !== 'development'`.
-
-### Middleware global
-
-```typescript
-// src/shared/middleware/error.middleware.ts
-export function errorMiddleware(err, _req, res, _next) {
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      error: {
-        code: err.code,
-        message: err.message,
-        details: err.details ?? null,
-        ...(process.env.NODE_ENV === 'development' && { debug: err.debug }),
-      },
-    })
-  }
-
-  // Erro inesperado — não vaza detalhes em produção
-  console.error(err)
-  return res.status(500).json({
-    error: {
-      code: 'internal.unexpected_error',
-      message: 'Erro interno inesperado',
-      details: null,
-      ...(process.env.NODE_ENV === 'development' && {
-        debug: { stack: err.stack, cause: err.message },
-      }),
-    },
-  })
-}
-```
-
----
-
-## 9. Autenticação e controle de acesso
-
-### Perfis
-
-| Perfil | Como é atribuído | O que acessa |
-|---|---|---|
-| `leitor` | Padrão para qualquer conta nova | Busca e visualização |
-| `gestor` | Atribuição manual no banco | Tudo + CRUD do acervo |
-
-> Não há auto-cadastro de gestores via API. A promoção de um usuário a gestor é feita
-> diretamente no banco por quem administra a infra.
-
-### Middlewares
-
-```
-auth.middleware.ts   → verifica JWT, checa denylist, popula req.user; lança UnauthorizedError
-role.middleware.ts   → recebe role mínimo exigido: roleGuard('gestor'); lança ForbiddenError
-```
-
-Uso nas rotas:
-
-```typescript
-router.post('/fontes', authMiddleware, roleGuard('gestor'), fonteController.create)
-router.get('/fontes', fonteController.list)  // público
-```
-
----
-
-## 10. Endpoints principais
-
-Todos os endpoints sob `/api/v1`.
-
-### Auth
-```
-POST /auth/register    → cria conta (leitor)
-POST /auth/login       → retorna JWT
-POST /auth/logout      → adiciona JTI na denylist  [autenticado]
-GET  /auth/me          → retorna usuário atual      [autenticado]
-```
-
-### Acervo
-```
-GET    /acervos
-POST   /acervos                     [gestor]
-GET    /acervos/:id
-PATCH  /acervos/:id                 [gestor]
-DELETE /acervos/:id                 [gestor]
-```
-
-### Fontes
-```
-GET    /fontes         ?acervo=&tipo=&idioma=&periodo_inicio=&periodo_fim=&ocr_status=
-POST   /fontes                      [gestor]
-GET    /fontes/:id
-PATCH  /fontes/:id                  [gestor]
-DELETE /fontes/:id                  [gestor]
-```
-
-### Edições
-```
-GET    /fontes/:fonteId/edicoes
-POST   /fontes/:fonteId/edicoes     [gestor]
-GET    /edicoes/:id
-PATCH  /edicoes/:id                 [gestor]
-DELETE /edicoes/:id                 [gestor]
-POST   /edicoes/:id/upload          [gestor]  — multipart/form-data (ZIP ou avulso)
-```
-
-### Páginas
-```
-GET    /edicoes/:edicaoId/paginas
-GET    /paginas/:id
-POST   /paginas/:id/reprocessar     [gestor]
-GET    /paginas/:id/imagem          → redirect para URL da imagem
-```
-
-### Busca
-```
-GET    /busca
-  ?q=            termo ou frase ("entre aspas")
-  &fonte_id=     busca num periódico específico
-  &data_inicio=
-  &data_fim=
-  &localidade=
-  &ordem=        relevancia | data
-  &page=
-  &limit=
-```
-
----
-
-## 11. Documentação da API com TypeSpec
-
-A documentação da API é feita com **TypeSpec** — os arquivos `.tsp` em `docs/api/`
-descrevem modelos e operações e geram o `openapi.yaml` como artefato de build.
-
-### Estrutura sugerida
-
-```
-docs/api/
-├── main.tsp           # imports e configuração global (@service, @server)
-├── models/
-│   ├── common.tsp     # Paginação, envelope de erro, tipos compartilhados
-│   ├── auth.tsp
-│   ├── acervo.tsp
-│   ├── fonte.tsp
-│   ├── edicao.tsp
-│   ├── pagina.tsp
-│   └── busca.tsp
-└── routes/
-    ├── auth.tsp
-    ├── acervos.tsp
-    ├── fontes.tsp
-    ├── edicoes.tsp
-    ├── paginas.tsp
-    └── busca.tsp
-```
-
-### Exemplo de uso
-
-```typespec
-// docs/api/models/fonte.tsp
-model Fonte {
-  id: string;
-  nome: string;
-  tipo: "jornal" | "revista" | "livro";
-  idioma: string;
-  metadata: Record<unknown>;
-  createdAt: utcDateTime;
-}
-
-model CreateFonteRequest {
-  nome: string;
-  tipo: "jornal" | "revista" | "livro";
-  acervoId: string;
-  idioma: string;
-  metadata?: Record<unknown>;
-}
-```
-
-```typespec
-// docs/api/routes/fontes.tsp
-@route("/fontes")
-interface FontesRoutes {
-  @get list(...ListFontesQuery): PaginatedResponse<Fonte>;
-  @post create(@body body: CreateFonteRequest): Fonte;
-  @get read(@path id: string): Fonte;
-  @patch update(@path id: string, @body body: UpdateFonteRequest): Fonte;
-  @delete remove(@path id: string): void;
-}
-```
-
-O `openapi.yaml` gerado pelo TypeSpec é o contrato oficial da API. Deve ser atualizado
-a cada alteração de endpoint e pode ser servido via Swagger UI no ambiente de
-desenvolvimento (`/docs`).
-
----
-
-## 12. Planejamento futuro
-
-### 11.1 Integração com serviço de OCR
-
-O módulo de OCR é desenvolvido por uma equipe separada (TCC). A integração está
-**pendente de reunião de alinhamento** para definição do contrato de interface.
-
-Pontos críticos a acordar antes de qualquer implementação:
-
-| Ponto | Impacto |
-|---|---|
-| Síncrono (resposta imediata) ou assíncrono (webhook/polling)? | Muda a arquitetura da fila inteiramente |
-| Coordenadas em pixels absolutos ou proporcionais (0–1)? | Afeta o cálculo de posicionamento do highlight no frontend |
-| Coordenadas relativas à imagem original ou redimensionada? | Risco de destaque desalinhado |
-| Segmentação por colunas disponível? | Necessário para buscas em jornais multi-coluna |
-| Timeout e formato de erro retornado? | Necessário para tratar falhas de forma consistente |
-
-Quando o contrato estiver definido, a integração se resume a implementar `IOcrAdapter`
-com o cliente HTTP real, implementar `IQueue` com uma fila adequada (pg-boss é uma boa
-opção — usa o próprio Postgres, sem infra adicional), e registrar os adaptadores no
-`container.ts`. O restante do código não muda.
-
-### 11.2 Análise por IA
-
-O Figma sugere uma camada de análise de conteúdo além do OCR puro (resumo automático,
-extração de entidades, resposta a perguntas). Esta feature está **fora do escopo atual**
-e requer especificação própria antes de qualquer implementação. Quando especificada,
-seguirá o mesmo padrão de adaptador com interface.
-
-### 11.3 Anotações e colaboração
-
-Comentários de usuários autenticados em páginas específicas foram identificados no
-Figma, mas **não confirmados como escopo do semestre**. A tabela `anotacoes` pode ser
-adicionada ao schema quando o escopo for confirmado.
-
-### 11.4 Autenticação social (Google OAuth)
-
-Não está no escopo atual. A estrutura de `auth` com email + senha foi projetada para
-permitir a adição de providers OAuth sem alteração nos demais módulos — bastaria
-adicionar a coluna `google_id` em `users` e um novo fluxo no `auth.service`.
-
----
-
-## 13. Decisões técnicas e justificativas
-
-| Decisão | Alternativa descartada | Justificativa |
-|---|---|---|
-| Ports e adapters nos repositórios | Repositório concreto injetado direto | Service depende de interface; troca de implementação e testes unitários sem banco ficam triviais |
-| Kysely como query builder | Prisma, Drizzle, pg puro | Type-safety sem abstração excessiva; queries full-text e dinâmicas ficam legíveis; migrations em TypeScript com tipagem nativa |
-| `tsvector` no Postgres | Elasticsearch | Sem infra adicional; suficiente para 50k páginas conforme requisito |
-| `Bun.password` para hashing | bcryptjs, argon2 | Nativo no Bun, zero dependência extra |
-| JWT + denylist no Postgres | Sessions no banco | Stateless por padrão; denylist leve para o volume do projeto |
-| `JSONB` para metadados de tipo | Tabelas separadas por tipo | Evita três tabelas quase idênticas; schema validado por Zod no service |
-| Awilix CLASSIC (construtor) | PROXY (proxy mágico) | Código explícito e fácil de ler para quem não conhece o Awilix |
-| TypeSpec para documentação | Swagger manual, tsoa | Contrato como código-fonte; geração automática do OpenAPI; mais robusto que manter YAML à mão |
-| Trigger Postgres para tsvector | Atualização no service | Garante consistência mesmo com inserções fora da API; sem lógica de indexação espalhada no backend |
-
----
-
-## 14. Questões em aberto
-
-1. **Contrato com a equipe de OCR** — síncrono ou assíncrono, formato de coordenadas,
-   segmentação por colunas. Bloqueia a implementação do módulo `pagina` e da fila de
-   processamento.
-2. **Anotações no escopo do semestre?** — confirmar com o professor.
-3. **Análise por IA no escopo do semestre?** — confirmar com o professor.
-4. **Ambiente de deploy** — volume persistente para storage local ou migração para
-   S3-compatible desde o início?
-
----
-
-*Documento vivo — atualizar após cada reunião de alinhamento.*
