@@ -263,4 +263,50 @@ injetada diretamente (leitura full-text via tsvector).
 
 ---
 
+## 14. Nomenclatura de rotas — estilo RPC
+
+As rotas deste projeto seguem o estilo **RPC (Remote Procedure Call)**: a ação está
+descrita explicitamente no path, tornando o contrato da API imediato sem depender
+do verbo HTTP para inferir a intenção.
+
+| ✅ Use | ❌ Evite | Motivo |
+|---|---|---|
+| `POST /api/users/signup` | `POST /api/users` | A ação está clara no path |
+| `DELETE /api/users/delete-account` | `DELETE /api/users/me` | Sem ambiguidade |
+| `PATCH /api/users/update-profile` | `PATCH /api/users/me` | Semântica explícita |
+| `POST /api/users/update-password` | `PATCH /api/users/me/password` | Ação descrita |
+| `POST /api/users/signout` | `DELETE /api/auth/session` | Intenção legível |
+
+O verbo HTTP ainda é usado corretamente (GET para leitura, POST/PATCH para escrita,
+DELETE para remoção), mas o path nunca depende exclusivamente dele.
+
+---
+
+## 15. Erros — formato do `code` em `AppError`
+
+O campo `code` de todo `AppError` segue o formato **`<domain>.<cause>`**:
+
+| Domínio | Quando usar |
+|---|---|
+| `auth` | Autenticação e autorização |
+| `resource` | Recursos não encontrados |
+| `input` | Validação de entrada |
+| `server` | Erros internos inesperados |
+| `user`, `collection`, etc. | Conflitos ou regras de domínio específico |
+
+```typescript
+// Exemplos
+'auth.unauthorized'       // token ausente ou inválido
+'resource.not_found'      // recurso não encontrado
+'input.validation_error'  // body inválido
+'server.internal_error'   // erro inesperado
+'user.email_conflict'     // conflito de email no domínio de usuário
+```
+
+O campo `debug` da `AppError` é **exclusivamente interno** — nunca deve ser
+serializado em respostas HTTP. Apenas os campos `code`, `message` e `details`
+são expostos ao cliente. O `debug` é logado via `logger.error` no servidor.
+
+---
+
 *Documento vivo — atualizar conforme novas decisões forem tomadas.*

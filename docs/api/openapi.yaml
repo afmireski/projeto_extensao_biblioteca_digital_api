@@ -1,0 +1,343 @@
+openapi: 3.0.0
+info:
+  title: (title)
+  version: 0.0.0
+tags:
+  - name: auth
+  - name: users
+paths:
+  /api/auth/login:
+    post:
+      operationId: Auth_login
+      description: |-
+        Authenticates a user with email and password.
+        Returns a signed JWT along with the user's email and name.
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Registered user email.
+                password:
+                  type: string
+                  description: User password (min 8 characters).
+              required:
+                - email
+                - password
+  /api/users/delete-account:
+    delete:
+      operationId: Users_deleteAccount
+      description: |-
+        Soft-deletes the authenticated user's account and revokes all sessions.
+        Always returns 204, even if the account was already deleted.
+        Requires a valid Bearer token.
+      parameters:
+        - name: authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - users
+  /api/users/profile:
+    get:
+      operationId: Users_profile
+      description: |-
+        Returns the profile of the authenticated user.
+        Requires a valid Bearer token.
+      parameters:
+        - name: authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - users
+  /api/users/signout:
+    post:
+      operationId: Users_signout
+      description: |-
+        Revokes the current session (signs out from the current device).
+        Requires a valid Bearer token.
+      parameters:
+        - name: authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - users
+  /api/users/signup:
+    post:
+      operationId: Users_signup
+      description: |-
+        Registers a new user account with role `reader`.
+        Returns the email of the created user.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                required:
+                  - email
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                  description: Min 8 characters.
+              required:
+                - name
+                - email
+                - password
+  /api/users/update-password:
+    post:
+      operationId: Users_updatePassword
+      description: |-
+        Changes the authenticated user's password.
+        Revokes all active sessions on success, requiring re-authentication.
+        Requires a valid Bearer token.
+      parameters:
+        - name: authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                  description: Current password.
+                password:
+                  type: string
+                  description: New password (min 8 characters).
+                confirmPassword:
+                  type: string
+                  description: Must match `password`.
+              required:
+                - oldPassword
+                - password
+                - confirmPassword
+  /api/users/update-profile:
+    patch:
+      operationId: Users_updateProfile
+      description: |-
+        Updates the authenticated user's name and/or email.
+        If the new email conflicts with an existing account, the response is
+        still 200 (masked conflict to prevent user enumeration).
+        Requires a valid Bearer token.
+      parameters:
+        - name: authorization
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required:
+                  - success
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+      description: Standard error response.
+    LoginResponse:
+      type: object
+      required:
+        - token
+        - email
+        - name
+      properties:
+        token:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+      description: Payload returned on successful login.
+    UserProfile:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        createdAt:
+          type: string
+          format: date-time
+      description: Authenticated user profile.
+    UserRole:
+      type: string
+      enum:
+        - reader
+        - manager
+servers:
+  - url: http://localhost:3000
+    description: Servidor local de desenvolvimento
+    variables: {}

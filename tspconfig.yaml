@@ -3,4 +3,4 @@ emit:
 
 options:
   "@typespec/openapi3":
-    output-dir: ./docs/api/generated
+    output-file: "{project-root}/docs/api/openapi.yaml"

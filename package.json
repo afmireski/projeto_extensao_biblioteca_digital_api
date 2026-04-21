@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "awilix": "^13.0.3",
+    "date-fns": "^4.1.0",
     "express": "^5.2.1",
     "jose": "^6.2.2",
     "kysely": "^0.28.16",
