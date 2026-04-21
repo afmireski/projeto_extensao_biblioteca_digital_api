@@ -1,0 +1,6 @@
+{
+  "url": "env(DATABASE_URL)",
+  "dialect": "postgres",
+  "outFile": "src/infra/database/types.ts",
+  "logLevel": "info"
+}

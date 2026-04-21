@@ -5,6 +5,8 @@
   "scripts": {
     "start:dev": "bun run --hot src/server.ts",
     "start:dev:debug": "bun run --hot --inspect src/server.ts",
+    "db:codegen": "kysely-codegen",
+    "docs:compile": "tsp compile docs/api/main.tsp",
     "migrate:make": "kysely migrate make",
     "migrate:up": "kysely migrate up",
     "migrate:down": "kysely migrate down",
@@ -16,11 +18,15 @@
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
     "@types/pg": "^8.20.0",
-    "kysely-ctl": "^0.20.0"
+    "@typespec/compiler": "^1.11.0",
+    "@typespec/http": "^1.11.0",
+    "@typespec/openapi3": "^1.11.0",
+    "@typespec/rest": "^0.81.0",
+    "kysely-codegen": "^0.20.0",
+    "kysely-ctl": "^0.20.0",
+    "typescript": "5.9.3"
   },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
+
   "dependencies": {
     "awilix": "^13.0.3",
     "express": "^5.2.1",

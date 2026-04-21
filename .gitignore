@@ -140,3 +140,7 @@ vite.config.ts.timestamp-*
 
 # Uploads locais (storage adapter)
 uploads/
+
+# TypeSpec — artefatos de build (OpenAPI gerado)
+docs/api/generated/
+
