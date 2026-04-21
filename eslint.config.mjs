@@ -1,10 +1,11 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import { defineConfig } from 'eslint/config';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import unusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: ['node_modules/**', 'dist/**', 'build/**', '.bun/**'],
   },
@@ -34,5 +35,5 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-unused-vars': 'off',
     },
-  }
+  },
 );
