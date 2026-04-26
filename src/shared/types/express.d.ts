@@ -1,4 +1,5 @@
 import type { UserRole } from '../../infra/database/types';
+import type { PaginationParams, OrderParams, Filters } from './query';
 
 declare global {
   namespace Express {
@@ -10,6 +11,9 @@ declare global {
         role: UserRole;
         sessionId: string;
       };
+      pagination?: PaginationParams;
+      order?: OrderParams;
+      filters?: Filters;
     }
   }
 }

@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: (title)
+  title: Biblioteca Digital API
   version: 0.0.0
 tags:
   - name: auth

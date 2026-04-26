@@ -229,7 +229,7 @@ CREATE TABLE collections (
 -- Fontes (livros, revistas, jornais)
 CREATE TABLE sources (
   id            UUID PRIMARY KEY DEFAULT uuidv7(),
-  collection_id UUID NOT NULL REFERENCES collections(id),
+  collection_id UUID REFERENCES collections(id),
   name          VARCHAR(255) NOT NULL,
   type          VARCHAR(10) NOT NULL CHECK (type IN ('newspaper', 'magazine', 'book')),
   language      VARCHAR(50) NOT NULL,

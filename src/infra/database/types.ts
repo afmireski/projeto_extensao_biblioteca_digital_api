@@ -55,7 +55,7 @@ export interface Sessions {
 }
 
 export interface Sources {
-  collection_id: string;
+  collection_id: string | null;
   created_at: Generated<Timestamp>;
   deleted_at: Timestamp | null;
   id: Generated<string>;

@@ -3,6 +3,7 @@ import { container } from './container';
 import { errorMiddleware } from './shared/middleware/error.middleware';
 import { makeAuthRouter } from './modules/auth/auth.router';
 import { makeUsersRouter } from './modules/users/users.router';
+import { makeSourcesRouter } from './modules/sources/sources.router';
 
 export const app = express();
 
@@ -13,6 +14,13 @@ app.use(
   '/api/users',
   makeUsersRouter(
     container.resolve('userController'),
+    container.resolve('authMiddleware'),
+  ),
+);
+app.use(
+  '/api/sources',
+  makeSourcesRouter(
+    container.resolve('sourcesController'),
     container.resolve('authMiddleware'),
   ),
 );
