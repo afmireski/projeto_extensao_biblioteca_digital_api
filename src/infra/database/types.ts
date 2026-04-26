@@ -47,6 +47,13 @@ export interface Editions {
   updated_at: Generated<Timestamp>;
 }
 
+export interface Sessions {
+  created_at: Generated<Timestamp>;
+  expires_at: Timestamp;
+  id: Generated<string>;
+  user_id: string;
+}
+
 export interface Sources {
   collection_id: string;
   created_at: Generated<Timestamp>;
@@ -73,6 +80,7 @@ export interface Users {
 export interface DB {
   collections: Collections;
   editions: Editions;
+  sessions: Sessions;
   sources: Sources;
   users: Users;
 }

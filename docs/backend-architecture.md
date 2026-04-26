@@ -136,11 +136,10 @@ não sabe nada de HTTP nem de Kysely — depende apenas das interfaces (ports).
 Gerencia autenticação e sessão via email + senha com JWT.
 
 - **Fluxo:** `POST /auth/login` recebe credenciais → service valida senha com
-  `Bun.password.verify` → emite JWT assinado. `POST /auth/register` cria o usuário
+  `Bun.password.verify` → registra uma sessão ativa no banco e emite JWT assinado contendo o ID da sessão. `POST /users/signup` cria o usuário
   com hash gerado por `Bun.password.hash` (bcrypt por padrão no Bun).
-- JWT é stateless. Para invalidação no logout, uma denylist de JTIs no Postgres é
-  suficiente para o volume do projeto.
-- **Repositório:** lê e escreve na tabela `users` e na `jwt_denylist`.
+- **Sessões Stateful:** O JWT atua como portador do ID da sessão. Para invalidação no logout, a sessão correspondente é deletada da tabela de `sessions` no Postgres. Isso permite que o usuário tenha múltiplas sessões ativas (vários dispositivos).
+- **Repositório:** lê e escreve na tabela `users` e na tabela `sessions`.
 
 ### 3.2 `acervo`
 
@@ -297,7 +296,7 @@ CREATE INDEX idx_editions_published_at ON editions (published_at);
 CREATE INDEX paginas_tsv_idx           ON paginas USING GIN (conteudo_tsv);
 CREATE INDEX paginas_edicao_idx        ON paginas (edicao_id);
 CREATE INDEX paginas_status_idx        ON paginas (ocr_status);
-CREATE INDEX jwt_denylist_exp_idx      ON jwt_denylist (expires_at);
+CREATE INDEX sessions_user_id_idx      ON sessions (user_id);
 ```
 
 ### Trigger para tsvector (Páginas)
