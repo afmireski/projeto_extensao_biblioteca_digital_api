@@ -12,8 +12,8 @@
     "migrate:down": "kysely migrate down",
     "migrate:status": "kysely migrate status",
     "test": "bun test",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
     "format": "prettier --write src/"
   },
   "devDependencies": {

@@ -1,36 +1,47 @@
 import { z } from 'zod';
+import { filterTextSchema } from '../../shared/schemas/query.schemas';
 
-export const createSourceSchema = z.object({
-  collectionId: z.uuid().optional(),
+// HTTP schema — snake_case input at the API boundary
+export const createSourceHttpSchema = z.object({
+  collection_id: z.uuid().optional(),
   name: z.string().min(1).max(255),
   type: z.enum(['newspaper', 'magazine', 'book']),
   language: z.string().min(1).max(50),
   metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
-export const updateSourceSchema = z.object({
-  collectionId: z.uuid().optional(),
+// Internal DTO schema — camelCase as used by the service layer
+export const createSourceSchema = createSourceHttpSchema.transform((data) => ({
+  collectionId: data.collection_id,
+  name: data.name,
+  type: data.type,
+  language: data.language,
+  metadata: data.metadata,
+}));
+
+// HTTP schema — snake_case input at the API boundary
+export const updateSourceHttpSchema = z.object({
+  collection_id: z.uuid().optional(),
   name: z.string().min(1).max(255).optional(),
   type: z.enum(['newspaper', 'magazine', 'book']).optional(),
   language: z.string().min(1).max(50).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-const filterRelationTextSchema = z
-  .object({
-    eq: z.string().optional(),
-    ne: z.string().optional(),
-    like: z.string().optional(),
-    in: z.array(z.string()).optional(),
-    nin: z.array(z.string()).optional(),
-  })
-  .optional();
+// Internal DTO schema — camelCase as used by the service layer
+export const updateSourceSchema = updateSourceHttpSchema.transform((data) => ({
+  collectionId: data.collection_id,
+  name: data.name,
+  type: data.type,
+  language: data.language,
+  metadata: data.metadata,
+}));
 
 export const sourceFilterSchema = z.object({
-  name: filterRelationTextSchema,
-  type: filterRelationTextSchema,
-  language: filterRelationTextSchema,
-  collection_id: filterRelationTextSchema,
+  name: filterTextSchema,
+  type: filterTextSchema,
+  language: filterTextSchema,
+  collection_id: filterTextSchema,
 });
 
 export const sourceOrderSchema = z.object({

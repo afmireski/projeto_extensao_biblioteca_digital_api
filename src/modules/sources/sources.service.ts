@@ -4,12 +4,10 @@ import type {
   UpdateSourceDTO,
   Source,
   ListSourcesResult,
+  ListSourcesFilters,
+  ListSourcesOrderParams,
 } from './sources.types';
-import type {
-  PaginationParams,
-  OrderParams,
-  Filters,
-} from '../../shared/types/query';
+import type { PaginationParams } from '../../shared/types/query';
 import { NotFoundError } from '../../shared/errors/app-errors';
 
 export class SourcesService {
@@ -52,8 +50,8 @@ export class SourcesService {
   }
 
   listSources(
-    filters?: Filters,
-    order?: OrderParams,
+    filters?: ListSourcesFilters,
+    order?: ListSourcesOrderParams,
     pagination?: PaginationParams,
   ): Promise<ListSourcesResult> {
     return this.sourcesRepository.list(filters, order, pagination);

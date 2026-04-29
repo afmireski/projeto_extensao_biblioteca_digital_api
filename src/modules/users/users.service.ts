@@ -53,7 +53,7 @@ export class UserService {
         email: user.email,
         name: user.name,
         role: user.role,
-        createdAt: user.created_at,
+        created_at: user.created_at,
       };
     });
   }

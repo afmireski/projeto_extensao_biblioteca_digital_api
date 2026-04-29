@@ -5,13 +5,11 @@ import type {
   Source,
   CreateSourceDTO,
   UpdateSourceDTO,
+  ListSourcesFilters,
+  ListSourcesOrderParams,
   ListSourcesResult,
 } from './sources.types';
-import type {
-  PaginationParams,
-  OrderParams,
-  Filters,
-} from '../../shared/types/query';
+import type { PaginationParams } from '../../shared/types/query';
 import {
   applyFilters,
   applyOrder,
@@ -68,8 +66,10 @@ export class SourcesRepository implements ISourcesRepository {
     return this.db
       .updateTable('sources')
       .set({
-        ...data,
         collection_id: data.collectionId,
+        name: data.name,
+        type: data.type,
+        language: data.language,
         metadata: data.metadata ? JSON.stringify(data.metadata) : undefined,
         updated_at: new Date(),
       })
@@ -91,14 +91,16 @@ export class SourcesRepository implements ISourcesRepository {
   }
 
   list(
-    filters?: Filters,
-    order?: OrderParams,
+    filters?: ListSourcesFilters,
+    order?: ListSourcesOrderParams,
     pagination?: PaginationParams,
   ): Promise<ListSourcesResult> {
     let query = this.db.selectFrom('sources').where('deleted_at', 'is', null);
 
-    query = applyFilters(query, filters);
-    query = applyOrder(query, order);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = applyFilters(query, filters as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = applyOrder(query, order as any);
 
     const countQuery = query.select((eb) =>
       eb.fn.count<number>('id').as('total'),

@@ -1,4 +1,4 @@
-import type { SelectQueryBuilder, StringReference } from 'kysely';
+import type { SelectQueryBuilder } from 'kysely';
 import type {
   Filters,
   OrderParams,
@@ -16,11 +16,15 @@ export function applyPagination<DB, TB extends keyof DB, O>(
 export function applyOrder<DB, TB extends keyof DB, O>(
   qb: SelectQueryBuilder<DB, TB, O>,
   order?: OrderParams,
+  columnMap?: Record<string, string>,
 ): SelectQueryBuilder<DB, TB, O> {
   if (!order || Object.keys(order).length === 0) return qb;
   let query = qb;
   for (const [column, direction] of Object.entries(order)) {
-    query = query.orderBy(column as StringReference<DB, TB>, direction);
+    const mappedCol =
+      columnMap && columnMap[column] ? columnMap[column] : column;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = query.orderBy(mappedCol as any, direction);
   }
   return query;
 }
@@ -28,6 +32,7 @@ export function applyOrder<DB, TB extends keyof DB, O>(
 export function applyFilters<DB, TB extends keyof DB, O>(
   qb: SelectQueryBuilder<DB, TB, O>,
   filters?: Filters,
+  columnMap?: Record<string, string>,
 ): SelectQueryBuilder<DB, TB, O> {
   if (!filters || Object.keys(filters).length === 0) return qb;
 
@@ -39,7 +44,10 @@ export function applyFilters<DB, TB extends keyof DB, O>(
     for (const [op, value] of Object.entries(operations)) {
       if (value === undefined) continue;
 
-      const colRef = column as StringReference<DB, TB>;
+      const mappedCol =
+        columnMap && columnMap[column] ? columnMap[column] : column;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const colRef = mappedCol as any;
 
       switch (op) {
         case 'eq':

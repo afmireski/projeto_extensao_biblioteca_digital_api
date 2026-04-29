@@ -4,11 +4,9 @@ import "@typespec/rest";
 using TypeSpec.Http;
 using TypeSpec.Rest;
 
-@route("/api/sources")
-@tag("Sources")
-namespace DigitalLibrary.Sources {
+namespace BibliotecaDigital;
 
-  model Source {
+model Source {
     id: string;
     collection_id?: string;
     name: string;
@@ -20,7 +18,7 @@ namespace DigitalLibrary.Sources {
   }
 
   model CreateSourceDTO {
-    collectionId?: string;
+    collection_id?: string;
     name: string;
     type: "newspaper" | "magazine" | "book";
     language: string;
@@ -28,7 +26,7 @@ namespace DigitalLibrary.Sources {
   }
 
   model UpdateSourceDTO {
-    collectionId?: string;
+    collection_id?: string;
     name?: string;
     type?: "newspaper" | "magazine" | "book";
     language?: string;
@@ -44,11 +42,14 @@ namespace DigitalLibrary.Sources {
   model ListSourcesResult {
     metadata: Metadata;
     data: Source[];
-  }
+}
 
+@route("/api/sources")
+@tag("Sources")
+interface Sources {
   @post
   @route("/create")
-  op create(@body body: CreateSourceDTO): {
+  create(@body body: CreateSourceDTO): {
     @statusCode statusCode: 201;
     @body source: Source;
   } | {
@@ -57,7 +58,7 @@ namespace DigitalLibrary.Sources {
 
   @patch
   @route("/{id}/update")
-  op update(@path id: string, @body body: UpdateSourceDTO): {
+  update(@path id: string, @body body: UpdateSourceDTO): {
     @statusCode statusCode: 200;
     @body source: Source;
   } | {
@@ -66,7 +67,7 @@ namespace DigitalLibrary.Sources {
 
   @delete
   @route("/{id}/delete")
-  op delete(@path id: string): {
+  deleteOp(@path id: string): {
     @statusCode statusCode: 204;
   } | {
     @statusCode statusCode: 404 | 401 | 403;
@@ -74,7 +75,7 @@ namespace DigitalLibrary.Sources {
 
   @get
   @route("/{id}")
-  op getById(@path id: string): {
+  getById(@path id: string): {
     @statusCode statusCode: 200;
     @body source: Source;
   } | {
@@ -83,7 +84,7 @@ namespace DigitalLibrary.Sources {
 
   @get
   @route("/list")
-  op list(
+  list(
     @query page?: int32,
     @query limit?: int32,
   ): {

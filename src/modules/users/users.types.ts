@@ -24,7 +24,7 @@ export interface ProfileOutput {
   email: string;
   name: string;
   role: UserRole;
-  createdAt: Date;
+  created_at: Date;
 }
 
 export interface UpdateProfileInput {

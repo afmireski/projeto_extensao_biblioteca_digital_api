@@ -11,8 +11,18 @@ export const updateProfileSchema = z.object({
   email: z.email().optional(),
 });
 
-export const updatePasswordSchema = z.object({
-  oldPassword: z.string().min(8),
+// HTTP schema — snake_case input at the API boundary
+export const updatePasswordHttpSchema = z.object({
+  old_password: z.string().min(8),
   password: z.string().min(8),
-  confirmPassword: z.string().min(8),
+  confirm_password: z.string().min(8),
 });
+
+// Internal DTO schema — camelCase as used by the service layer
+export const updatePasswordSchema = updatePasswordHttpSchema.transform(
+  (data) => ({
+    oldPassword: data.old_password,
+    password: data.password,
+    confirmPassword: data.confirm_password,
+  }),
+);

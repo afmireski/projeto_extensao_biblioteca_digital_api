@@ -85,11 +85,11 @@ interface Users {
     @header authorization: string,
     @body body: {
       /** Current password. */
-      oldPassword: string;
+      old_password: string;
       /** New password (min 8 characters). */
       password: string;
       /** Must match `password`. */
-      confirmPassword: string;
+      confirm_password: string;
     },
   ): {
     @statusCode statusCode: 204;

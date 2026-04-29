@@ -1,13 +1,11 @@
-import type {
-  Filters,
-  OrderParams,
-  PaginationParams,
-} from '../../shared/types/query';
+import type { PaginationParams } from '../../shared/types/query';
 import type {
   CreateSourceDTO,
   ListSourcesResult,
   Source,
   UpdateSourceDTO,
+  ListSourcesFilters,
+  ListSourcesOrderParams,
 } from './sources.types';
 
 export interface ISourcesRepository {
@@ -16,8 +14,8 @@ export interface ISourcesRepository {
   update(id: string, data: UpdateSourceDTO): Promise<Source | undefined>;
   softDelete(id: string): Promise<boolean>;
   list(
-    filters?: Filters,
-    order?: OrderParams,
+    filters?: ListSourcesFilters,
+    order?: ListSourcesOrderParams,
     pagination?: PaginationParams,
   ): Promise<ListSourcesResult>;
 }

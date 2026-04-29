@@ -5,6 +5,8 @@ info:
 tags:
   - name: auth
   - name: users
+  - name: Sources
+  - name: Editions
 paths:
   /api/auth/login:
     post:
@@ -50,6 +52,375 @@ paths:
               required:
                 - email
                 - password
+  /api/editions/create:
+    post:
+      operationId: Editions_create
+      description: |-
+        Create a new edition.
+        Requires manager role. Validates that the referenced source exists.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Edition'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Editions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEditionDTO'
+  /api/editions/list:
+    get:
+      operationId: Editions_list
+      description: |-
+        List editions with filtering, ordering, and pagination.
+        Only editions whose parent source is not soft-deleted are returned.
+        Supports filtering by: number, published_at (range), source_name, source_type, source_language.
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+        - name: number
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: published_at_gte
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: published_at_lte
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: source_name
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: source_type
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+        - name: source_language
+          in: query
+          required: false
+          schema:
+            type: string
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListEditionsResult'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Editions
+  /api/editions/{id}:
+    get:
+      operationId: Editions_getById
+      description: |-
+        Get an edition by ID.
+        Returns 404 if the edition or its parent source is soft-deleted.
+        Response includes source metadata (name, type, language).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EditionWithSource'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Editions
+  /api/editions/{id}/delete:
+    delete:
+      operationId: Editions_deleteOp
+      description: |-
+        Soft-delete an edition.
+        Requires manager role.
+        Returns 404 if the edition or its parent source is soft-deleted.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Editions
+  /api/editions/{id}/update:
+    patch:
+      operationId: Editions_update
+      description: |-
+        Update an edition.
+        Requires manager role. source_id is immutable and cannot be changed.
+        Returns 404 if the edition or its parent source is soft-deleted.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Edition'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Editions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEditionDTO'
+  /api/sources/create:
+    post:
+      operationId: Sources_create
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+        '401':
+          description: Access is unauthorized.
+        '403':
+          description: Access is forbidden.
+      tags:
+        - Sources
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceDTO'
+  /api/sources/list:
+    get:
+      operationId: Sources_list
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListSourcesResult'
+        '401':
+          description: Access is unauthorized.
+      tags:
+        - Sources
+  /api/sources/{id}:
+    get:
+      operationId: Sources_getById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '401':
+          description: Access is unauthorized.
+        '404':
+          description: The server cannot find the requested resource.
+      tags:
+        - Sources
+  /api/sources/{id}/delete:
+    delete:
+      operationId: Sources_deleteOp
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '401':
+          description: Access is unauthorized.
+        '403':
+          description: Access is forbidden.
+        '404':
+          description: The server cannot find the requested resource.
+      tags:
+        - Sources
+  /api/sources/{id}/update:
+    patch:
+      operationId: Sources_update
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+        '401':
+          description: Access is unauthorized.
+        '403':
+          description: Access is forbidden.
+        '404':
+          description: The server cannot find the requested resource.
+      tags:
+        - Sources
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSourceDTO'
   /api/users/delete-account:
     delete:
       operationId: Users_deleteAccount
@@ -218,19 +589,19 @@ paths:
             schema:
               type: object
               properties:
-                oldPassword:
+                old_password:
                   type: string
                   description: Current password.
                 password:
                   type: string
                   description: New password (min 8 characters).
-                confirmPassword:
+                confirm_password:
                   type: string
                   description: Must match `password`.
               required:
-                - oldPassword
+                - old_password
                 - password
-                - confirmPassword
+                - confirm_password
   /api/users/update-profile:
     patch:
       operationId: Users_updateProfile
@@ -284,6 +655,102 @@ paths:
                   type: string
 components:
   schemas:
+    CreateEditionDTO:
+      type: object
+      required:
+        - source_id
+      properties:
+        source_id:
+          type: string
+          description: UUID of the parent source.
+        number:
+          type: string
+        published_at:
+          type: string
+          description: Date in YYYY-MM-DD format.
+        notes:
+          type: string
+    CreateSourceDTO:
+      type: object
+      required:
+        - name
+        - type
+        - language
+      properties:
+        collection_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - newspaper
+            - magazine
+            - book
+        language:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: {}
+    Edition:
+      type: object
+      required:
+        - id
+        - source_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        source_id:
+          type: string
+        number:
+          type: string
+        published_at:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: A single edition of a source (e.g. issue nº 42 of a newspaper).
+    EditionWithSource:
+      type: object
+      required:
+        - id
+        - source_id
+        - created_at
+        - updated_at
+        - source_name
+        - source_type
+        - source_language
+      properties:
+        id:
+          type: string
+        source_id:
+          type: string
+        number:
+          type: string
+        published_at:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        source_name:
+          type: string
+        source_type:
+          type: string
+        source_language:
+          type: string
+      description: Edition enriched with parent source metadata. Returned by GET /{id}.
     ErrorResponse:
       type: object
       required:
@@ -297,6 +764,44 @@ components:
         details:
           type: object
       description: Standard error response.
+    ListEditionsResult:
+      type: object
+      required:
+        - metadata
+        - data
+      properties:
+        metadata:
+          type: object
+          properties:
+            total:
+              type: integer
+              format: int32
+            page:
+              type: integer
+              format: int32
+            limit:
+              type: integer
+              format: int32
+          required:
+            - total
+            - page
+            - limit
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Edition'
+    ListSourcesResult:
+      type: object
+      required:
+        - metadata
+        - data
+      properties:
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
     LoginResponse:
       type: object
       required:
@@ -311,6 +816,82 @@ components:
         name:
           type: string
       description: Payload returned on successful login.
+    Metadata:
+      type: object
+      required:
+        - total
+        - page
+        - limit
+      properties:
+        total:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+    Source:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - language
+        - metadata
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        collection_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - newspaper
+            - magazine
+            - book
+        language:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: {}
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    UpdateEditionDTO:
+      type: object
+      properties:
+        number:
+          type: string
+        published_at:
+          type: string
+          description: Date in YYYY-MM-DD format.
+        notes:
+          type: string
+    UpdateSourceDTO:
+      type: object
+      properties:
+        collection_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+            - newspaper
+            - magazine
+            - book
+        language:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: {}
     UserProfile:
       type: object
       required:
