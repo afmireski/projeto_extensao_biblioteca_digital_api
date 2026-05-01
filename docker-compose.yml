@@ -43,11 +43,11 @@ services:
     entrypoint: >
       /bin/sh -c "
         mc alias set local http://minio:9000 ${STORAGE_KEY} ${STORAGE_SECRET};
-        mc mb --ignore-existing local/paginas-originais;
-        mc mb --ignore-existing local/paginas-display;
-        mc mb --ignore-existing local/paginas-thumb;
-        mc anonymous set download local/paginas-display;
-        mc anonymous set download local/paginas-thumb;
+        mc mb --ignore-existing local/pages-originals;
+        mc mb --ignore-existing local/pages-display;
+        mc mb --ignore-existing local/pages-thumb;
+        mc anonymous set download local/pages-display;
+        mc anonymous set download local/pages-thumb;
       "
 
 volumes:

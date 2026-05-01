@@ -23,7 +23,6 @@ interface PagesRoutes {
     }
   ): {
     @statusCode statusCode: 201;
-    @body response: { message: string };
   } | {
     @statusCode statusCode: 400 | 401 | 403 | 500;
   };

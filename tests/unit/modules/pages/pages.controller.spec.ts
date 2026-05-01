@@ -1,22 +1,29 @@
 import { describe, it, expect, mock, beforeEach } from 'bun:test';
-import type { Request, Response } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import { PagesController } from '../../../../src/modules/pages/pages.controller';
+import type { PagesService } from '../../../../src/modules/pages/pages.service';
 import { ValidationError } from '../../../../src/shared/errors/app-errors';
 
 describe('PagesController', () => {
   let pagesController: PagesController;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let pagesServiceMock: any;
+  let pagesServiceMock: PagesService & {
+    uploadBatch: ReturnType<typeof mock>;
+    list: ReturnType<typeof mock>;
+    deleteBatch: ReturnType<typeof mock>;
+  };
   let req: Partial<Request>;
   let res: Partial<Response>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let next: any;
+  let next: NextFunction & ReturnType<typeof mock>;
 
   beforeEach(() => {
     pagesServiceMock = {
       uploadBatch: mock(() => Promise.resolve([])),
       list: mock(() => Promise.resolve({ data: [], metadata: {} })),
       deleteBatch: mock(() => Promise.resolve()),
+    } as unknown as PagesService & {
+      uploadBatch: ReturnType<typeof mock>;
+      list: ReturnType<typeof mock>;
+      deleteBatch: ReturnType<typeof mock>;
     };
 
     pagesController = new PagesController(pagesServiceMock);
@@ -63,7 +70,7 @@ describe('PagesController', () => {
         1,
       );
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalled();
+      expect(res.send).toHaveBeenCalled();
     });
 
     it('deve chamar next com ValidationError se array de files estiver vazio', async () => {

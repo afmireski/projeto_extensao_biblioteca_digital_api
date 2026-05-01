@@ -21,12 +21,12 @@ Isolar a lógica do Sharp num utilitário mantém o service limpo e facilita tro
 biblioteca no futuro sem tocar nas regras de negócio.
 
 ```typescript
-import sharp from "sharp";
+import sharp from 'sharp';
 
 export interface ImageVariants {
   original: Buffer; // buffer bruto, sem alteração
-  display: Buffer;  // ~1800px, WebP, qualidade 85
-  thumb: Buffer;    // ~300px, WebP, qualidade 75
+  display: Buffer; // ~1800px, WebP, qualidade 85
+  thumb: Buffer; // ~300px, WebP, qualidade 75
 }
 
 export async function gerarVariantes(input: Buffer): Promise<ImageVariants> {
@@ -35,13 +35,23 @@ export async function gerarVariantes(input: Buffer): Promise<ImageVariants> {
   const [display, thumb] = await Promise.all([
     base
       .clone()
-      .resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true })
+      .resize({
+        width: 1800,
+        height: 1800,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
       .webp({ quality: 85 })
       .toBuffer(),
 
     base
       .clone()
-      .resize({ width: 300, height: 300, fit: "inside", withoutEnlargement: true })
+      .resize({
+        width: 300,
+        height: 300,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
       .webp({ quality: 75 })
       .toBuffer(),
   ]);
@@ -78,9 +88,9 @@ async uploadPagina(edicaoId: string, numero: number, buffer: Buffer) {
   const { original, display, thumb } = await gerarVariantes(buffer);
 
   const [originalPath, displayPath, thumbPath] = await Promise.all([
-    this.storageAdapter.upload("paginas-originais", `${key}/original`, original, "image/webp"),
-    this.storageAdapter.upload("paginas-display",   `${key}/display`,  display,  "image/webp"),
-    this.storageAdapter.upload("paginas-thumb",     `${key}/thumb`,    thumb,    "image/webp"),
+    this.storageAdapter.upload("pages-originals", `${key}/original`, original, "image/webp"),
+    this.storageAdapter.upload("pages-display",   `${key}/display`,  display,  "image/webp"),
+    this.storageAdapter.upload("pages-thumb",     `${key}/thumb`,    thumb,    "image/webp"),
   ]);
 
   await this.paginaRepository.criar({
@@ -139,11 +149,11 @@ async uploadPagina(req: Request, res: Response) {
 
 ## 5. Resumo das variantes
 
-| Variante   | Dimensão máxima | Formato | Qualidade | Bucket               | Acesso  |
-|------------|-----------------|---------|-----------|----------------------|---------|
-| `original` | sem alteração   | WebP    | —         | `paginas-originais`  | privado |
-| `display`  | 1800 × 1800 px  | WebP    | 85        | `paginas-display`    | público |
-| `thumb`    | 300 × 300 px    | WebP    | 75        | `paginas-thumb`      | público |
+| Variante   | Dimensão máxima | Formato | Qualidade | Bucket            | Acesso  |
+| ---------- | --------------- | ------- | --------- | ----------------- | ------- |
+| `original` | sem alteração   | WebP    | —         | `pages-originals` | privado |
+| `display`  | 1800 × 1800 px  | WebP    | 85        | `pages-display`   | público |
+| `thumb`    | 300 × 300 px    | WebP    | 75        | `pages-thumb`     | público |
 
 Os valores de dimensão e qualidade são pontos de partida razoáveis e podem ser ajustados
 conforme a qualidade média dos scans do acervo.

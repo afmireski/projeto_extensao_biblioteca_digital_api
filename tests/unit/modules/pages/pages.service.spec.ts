@@ -21,19 +21,33 @@ mock.module('../../../../src/infra/image/image.processor', () => ({
 
 describe('PagesService', () => {
   let pagesService: PagesService;
-  let pagesRepositoryMock: IPagesRepository;
-  let storageAdapterMock: IStorageAdapter;
+  let pagesRepositoryMock: IPagesRepository & {
+    createMany: ReturnType<typeof mock>;
+    list: ReturnType<typeof mock>;
+    deleteManyByIds: ReturnType<typeof mock>;
+  };
+  let storageAdapterMock: IStorageAdapter & {
+    upload: ReturnType<typeof mock>;
+    delete: ReturnType<typeof mock>;
+  };
 
   beforeEach(() => {
     pagesRepositoryMock = {
       createMany: mock(() => Promise.resolve([])),
       list: mock(() => Promise.resolve({ data: [], total: 0 })),
       deleteManyByIds: mock(() => Promise.resolve([])),
+    } as unknown as IPagesRepository & {
+      createMany: ReturnType<typeof mock>;
+      list: ReturnType<typeof mock>;
+      deleteManyByIds: ReturnType<typeof mock>;
     };
 
     storageAdapterMock = {
       upload: mock(() => Promise.resolve({ path: 'mock-path' })),
       delete: mock(() => Promise.resolve()),
+    } as unknown as IStorageAdapter & {
+      upload: ReturnType<typeof mock>;
+      delete: ReturnType<typeof mock>;
     };
 
     pagesService = new PagesService(pagesRepositoryMock, storageAdapterMock);
@@ -82,7 +96,7 @@ describe('PagesService', () => {
 
       expect(storageAdapterMock.upload).toHaveBeenCalledTimes(6); // 2 arquivos * 3 variantes
       expect(pagesRepositoryMock.createMany).toHaveBeenCalledTimes(1);
-      const callArgs = pagesRepositoryMock.createMany.mock.calls[0][0];
+      const callArgs = pagesRepositoryMock.createMany.mock!.calls[0]![0]!;
       expect(callArgs).toHaveLength(2);
       expect(callArgs[0].number).toBe(1);
       expect(callArgs[1].number).toBe(2);

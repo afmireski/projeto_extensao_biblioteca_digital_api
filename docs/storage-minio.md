@@ -30,15 +30,15 @@ services:
     container_name: biblioteca_storage
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"   # API S3 — endpoint que a aplicação usa
-      - "9001:9001"   # Console web (http://localhost:9001)
+      - '9000:9000' # API S3 — endpoint que a aplicação usa
+      - '9001:9001' # Console web (http://localhost:9001)
     environment:
       MINIO_ROOT_USER: ${STORAGE_KEY}
       MINIO_ROOT_PASSWORD: ${STORAGE_SECRET}
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ['CMD', 'mc', 'ready', 'local']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -52,11 +52,11 @@ services:
     entrypoint: >
       /bin/sh -c "
         mc alias set local http://minio:9000 ${STORAGE_KEY} ${STORAGE_SECRET};
-        mc mb --ignore-existing local/paginas-originais;
-        mc mb --ignore-existing local/paginas-display;
-        mc mb --ignore-existing local/paginas-thumb;
-        mc anonymous set download local/paginas-display;
-        mc anonymous set download local/paginas-thumb;
+        mc mb --ignore-existing local/pages-originals;
+        mc mb --ignore-existing local/pages-display;
+        mc mb --ignore-existing local/pages-thumb;
+        mc anonymous set download local/pages-display;
+        mc anonymous set download local/pages-thumb;
       "
 
 volumes:
@@ -65,11 +65,11 @@ volumes:
 
 Os três buckets correspondem diretamente às colunas da tabela `paginas`:
 
-| Bucket              | Coluna                  | Acesso  |
-|---------------------|-------------------------|---------|
-| `paginas-originais` | `imagem_original_path`  | privado |
-| `paginas-display`   | `imagem_display_path`   | público |
-| `paginas-thumb`     | `imagem_thumb_path`     | público |
+| Bucket            | Coluna                 | Acesso  |
+| ----------------- | ---------------------- | ------- |
+| `pages-originals` | `imagem_original_path` | privado |
+| `pages-display`   | `imagem_display_path`  | público |
+| `pages-thumb`     | `imagem_thumb_path`    | público |
 
 Display e thumb são públicos para que o frontend sirva as imagens diretamente pela URL,
 sem passar pela API.
@@ -102,8 +102,8 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import type { IStorageAdapter, UploadResult } from "./storage.interface";
+} from '@aws-sdk/client-s3';
+import type { IStorageAdapter, UploadResult } from './storage.interface';
 
 export class S3StorageAdapter implements IStorageAdapter {
   private readonly client: S3Client;
@@ -115,8 +115,8 @@ export class S3StorageAdapter implements IStorageAdapter {
         accessKeyId: process.env.STORAGE_KEY!,
         secretAccessKey: process.env.STORAGE_SECRET!,
       },
-      region: process.env.STORAGE_REGION ?? "us-east-1",
-      forcePathStyle: process.env.STORAGE_PATH_STYLE === "true",
+      region: process.env.STORAGE_REGION ?? 'us-east-1',
+      forcePathStyle: process.env.STORAGE_PATH_STYLE === 'true',
     });
   }
 
@@ -124,10 +124,15 @@ export class S3StorageAdapter implements IStorageAdapter {
     bucket: string,
     key: string,
     body: Buffer,
-    contentType: string
+    contentType: string,
   ): Promise<UploadResult> {
     await this.client.send(
-      new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType })
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+      }),
     );
 
     // Retorna a path relativa — a URL pública é montada pela aplicação usando o endpoint
@@ -136,7 +141,7 @@ export class S3StorageAdapter implements IStorageAdapter {
 
   async delete(bucket: string, key: string): Promise<void> {
     await this.client.send(
-      new DeleteObjectCommand({ Bucket: bucket, Key: key })
+      new DeleteObjectCommand({ Bucket: bucket, Key: key }),
     );
   }
 }
@@ -155,13 +160,12 @@ bun add @aws-sdk/client-s3
 Trocar o adaptador registrado conforme o ambiente:
 
 ```typescript
-import { LocalStorageAdapter } from "./infra/storage/local.adapter";
-import { S3StorageAdapter } from "./infra/storage/s3.adapter";
+import { LocalStorageAdapter } from './infra/storage/local.adapter';
+import { S3StorageAdapter } from './infra/storage/s3.adapter';
 
-const storageAdapter =
-  process.env.STORAGE_ENDPOINT
-    ? new S3StorageAdapter()
-    : new LocalStorageAdapter();
+const storageAdapter = process.env.STORAGE_ENDPOINT
+  ? new S3StorageAdapter()
+  : new LocalStorageAdapter();
 
 container.register({
   storageAdapter: asValue(storageAdapter),

@@ -28,9 +28,7 @@ export class PagesController {
     this.pagesService
       .uploadBatch(editionId, fileDTOs, startingNumber)
       .then(() => {
-        res
-          .status(201)
-          .json({ message: 'Páginas processadas e registradas com sucesso.' });
+        res.status(201).send();
       })
       .catch(next);
   };

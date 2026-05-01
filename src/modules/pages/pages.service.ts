@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import type { IPagesRepository } from './pages.repository.port';
 import { generateVariants } from '../../infra/image/image.processor';
 import { InternalError, NotFoundError } from '../../shared/errors/app-errors';
@@ -13,6 +12,7 @@ import type {
 import type { PaginationParams } from '../../shared/types/query';
 import { logger } from '../../shared/logger';
 import type { IStorageAdapter } from '../../infra/storage/storage.interface';
+import { randomUUIDv7 } from 'bun';
 
 export class PagesService {
   constructor(
@@ -27,26 +27,26 @@ export class PagesService {
   ): Promise<PageEntity[]> {
     const uploadPromises = files.map((file, index) => {
       const pageNumber = startingNumber + index;
-      const key = randomUUID();
+      const key = randomUUIDv7();
 
       return generateVariants(file)
         .then(({ original, display, thumb }) => {
           const ext = original.originalname.split('.').pop() || 'bin';
           return Promise.all([
             this.storageAdapter.upload(
-              'paginas-originais',
+              'pages-originals',
               `${key}/original.${ext}`,
               original.buffer,
               original.mimetype,
             ),
             this.storageAdapter.upload(
-              'paginas-display',
+              'pages-display',
               `${key}/display.webp`,
               display,
               'image/webp',
             ),
             this.storageAdapter.upload(
-              'paginas-thumb',
+              'pages-thumb',
               `${key}/thumb.webp`,
               thumb,
               'image/webp',
@@ -128,22 +128,22 @@ export class PagesService {
           if (p.original_image_path)
             paths.push(
               this.storageAdapter.delete(
-                'paginas-originais',
-                p.original_image_path.replace('paginas-originais/', ''),
+                'pages-originals',
+                p.original_image_path.replace('pages-originals/', ''),
               ),
             );
           if (p.display_image_path)
             paths.push(
               this.storageAdapter.delete(
-                'paginas-display',
-                p.display_image_path.replace('paginas-display/', ''),
+                'pages-display',
+                p.display_image_path.replace('pages-display/', ''),
               ),
             );
           if (p.thumb_image_path)
             paths.push(
               this.storageAdapter.delete(
-                'paginas-thumb',
-                p.thumb_image_path.replace('paginas-thumb/', ''),
+                'pages-thumb',
+                p.thumb_image_path.replace('pages-thumb/', ''),
               ),
             );
           return paths;

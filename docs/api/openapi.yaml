@@ -436,15 +436,6 @@ paths:
       responses:
         '201':
           description: The request has succeeded and a new resource has been created as a result.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                required:
-                  - message
         '400':
           description: The server could not understand the request due to invalid syntax.
         '401':
