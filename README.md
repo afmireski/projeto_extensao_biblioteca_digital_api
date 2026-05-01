@@ -21,7 +21,10 @@ Crie o seu arquivo `.env` baseado no exemplo (os valores padrões já funcionam 
 cp .env.example .env
 ```
 
-**3. Suba o banco de dados (PostgreSQL)**
+**3. Suba a infra**
+* Banco de dados postgresql
+* MinIO (para armazenamento de arquivos), simula um bucket do S3, só que local
+
 ```bash
 docker compose up -d
 ```
