@@ -5,6 +5,7 @@ import { makeAuthRouter } from './modules/auth/auth.router';
 import { makeUsersRouter } from './modules/users/users.router';
 import { makeSourcesRouter } from './modules/sources/sources.router';
 import { makeEditionsRouter } from './modules/editions/editions.router';
+import { makePagesRouter } from './modules/pages/pages.router';
 
 export const app = express();
 
@@ -29,6 +30,13 @@ app.use(
   '/api/editions',
   makeEditionsRouter(
     container.resolve('editionsController'),
+    container.resolve('authMiddleware'),
+  ),
+);
+app.use(
+  '/api/pages',
+  makePagesRouter(
+    container.resolve('pagesController'),
     container.resolve('authMiddleware'),
   ),
 );

@@ -7,6 +7,7 @@ tags:
   - name: users
   - name: Sources
   - name: Editions
+  - name: Pages
 paths:
   /api/auth/login:
     post:
@@ -293,6 +294,191 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateEditionDTO'
+  /api/pages/:
+    get:
+      operationId: PagesRoutes_listByEditionId
+      summary: Listar Páginas por Edição
+      description: Lista todas as páginas de uma edição de forma paginada.
+      parameters:
+        - name: edition_id
+          in: query
+          required: true
+          schema:
+            type: string
+          explode: false
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 1
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 50
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        edition_id:
+                          type: string
+                        number:
+                          type: integer
+                          format: int32
+                        display_image_url:
+                          type: string
+                          nullable: true
+                        thumb_image_url:
+                          type: string
+                          nullable: true
+                        ocr_status:
+                          type: string
+                        ocr_confidence:
+                          type: number
+                          format: float
+                          nullable: true
+                      required:
+                        - id
+                        - edition_id
+                        - number
+                        - display_image_url
+                        - thumb_image_url
+                        - ocr_status
+                        - ocr_confidence
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        format: int32
+                      page:
+                        type: integer
+                        format: int32
+                      limit:
+                        type: integer
+                        format: int32
+                      total_pages:
+                        type: integer
+                        format: int32
+                    required:
+                      - total
+                      - page
+                      - limit
+                      - total_pages
+                required:
+                  - data
+                  - meta
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+        '401':
+          description: Access is unauthorized.
+        '500':
+          description: Server error
+      tags:
+        - Pages
+  /api/pages/delete-batch:
+    post:
+      operationId: PagesRoutes_deleteBatch
+      summary: Remover Páginas em Lote
+      description: Remove fisicamente os arquivos e as referências no banco de dados para as páginas informadas.
+      parameters: []
+      responses:
+        '204':
+          description: 'There is no content to send for this request, but the headers may be useful. '
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+        '401':
+          description: Access is unauthorized.
+        '403':
+          description: Access is forbidden.
+        '404':
+          description: The server cannot find the requested resource.
+        '500':
+          description: Server error
+      tags:
+        - Pages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page_ids:
+                  type: array
+                  items:
+                    type: string
+              required:
+                - page_ids
+  /api/pages/upload-batch:
+    post:
+      operationId: PagesRoutes_uploadBatch
+      summary: Upload de Páginas em Lote
+      description: Recebe imagens em formato multipart/form-data e as processa, vinculando a uma edição.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                  - message
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+        '401':
+          description: Access is unauthorized.
+        '403':
+          description: Access is forbidden.
+        '500':
+          description: Server error
+      tags:
+        - Pages
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                pages:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                edition_id:
+                  type: string
+                starting_number:
+                  type: integer
+                  format: int32
+              required:
+                - pages
+                - edition_id
+                - starting_number
+            encoding:
+              starting_number:
+                contentType: text/plain
   /api/sources/create:
     post:
       operationId: Sources_create

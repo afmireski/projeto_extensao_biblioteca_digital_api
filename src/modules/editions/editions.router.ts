@@ -55,6 +55,7 @@ export const makeEditionsRouter = (
   router.get(
     '/list',
     authMiddleware,
+    requireRoles(['manager', 'reader']),
     parsePagination(),
     parseFilter(editionFilterSchema),
     parseOrder(editionOrderSchema),
@@ -64,6 +65,7 @@ export const makeEditionsRouter = (
   router.get(
     '/:id',
     authMiddleware,
+    requireRoles(['manager', 'reader']),
     validateParams(paramIdSchema),
     editionsController.getById,
   );

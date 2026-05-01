@@ -17,5 +17,39 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: biblioteca_storage
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Console web
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_KEY}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 ${STORAGE_KEY} ${STORAGE_SECRET};
+        mc mb --ignore-existing local/paginas-originais;
+        mc mb --ignore-existing local/paginas-display;
+        mc mb --ignore-existing local/paginas-thumb;
+        mc anonymous set download local/paginas-display;
+        mc anonymous set download local/paginas-thumb;
+      "
+
 volumes:
   postgres_data:
+  minio_data:

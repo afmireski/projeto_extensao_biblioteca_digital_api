@@ -8,6 +8,7 @@ import "./routes/auth.tsp";
 import "./routes/users.tsp";
 import "./routes/sources.tsp";
 import "./routes/editions.tsp";
+import "./routes/pages.tsp";
 
 using TypeSpec.Http;
 using TypeSpec.Rest;

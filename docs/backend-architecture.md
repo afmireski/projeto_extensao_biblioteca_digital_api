@@ -71,13 +71,13 @@ não sabe nada de HTTP nem de Kysely — depende apenas das interfaces (ports).
 │   │   │   ├── edicao.repository.ts       # implementação Kysely
 │   │   │   └── edicao.types.ts
 │   │   │
-│   │   ├── pagina/
-│   │   │   ├── pagina.router.ts
-│   │   │   ├── pagina.controller.ts
-│   │   │   ├── pagina.service.ts
-│   │   │   ├── pagina.repository.port.ts  # interface IPaginaRepository
-│   │   │   ├── pagina.repository.ts       # implementação Kysely
-│   │   │   └── pagina.types.ts
+│   │   ├── pages/
+│   │   │   ├── pages.router.ts
+│   │   │   ├── pages.controller.ts
+│   │   │   ├── pages.service.ts
+│   │   │   ├── pages.repository.port.ts  # interface IPagesRepository
+│   │   │   ├── pages.repository.ts       # implementação Kysely
+│   │   │   └── pages.types.ts
 │   │   │
 │   │   └── busca/
 │   │       ├── busca.router.ts
@@ -168,7 +168,7 @@ Uma edição específica de uma fonte (ex.: Jornal X, edição 42, 15/03/1920).
   `IStorageAdapter` e registra as páginas com status `aguardando`. O enfileiramento
   para OCR é responsabilidade da fila de processamento — ver planejamento futuro.
 
-### 3.5 `pagina`
+### 3.5 `pages`
 
 Unidade mínima do acervo. Representa uma imagem digitalizada.
 
@@ -176,7 +176,7 @@ Unidade mínima do acervo. Representa uma imagem digitalizada.
   display), status OCR, score de confiança, dados brutos do OCR (JSONB) e `tsvector`
   para busca full-text.
 - O `tsvector` é atualizado via trigger Postgres ao receber o texto do OCR.
-- Reprocessamento: o service invalida o status da página para `aguardando` e registra
+- Reprocessamento: o service invalida o status da página para `waiting` e registra
   uma nova entrada em `ocr_jobs`.
 
 ### 3.6 `busca`
@@ -251,33 +251,33 @@ CREATE TABLE editions (
   deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
 
--- Páginas (A implementar futuramente)
-CREATE TABLE paginas (
-  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  edicao_id            UUID NOT NULL REFERENCES editions(id),
-  numero               INTEGER NOT NULL,
-  imagem_original_path TEXT NOT NULL,
-  imagem_display_path  TEXT,
-  imagem_thumb_path    TEXT,
-  ocr_status           TEXT NOT NULL DEFAULT 'aguardando',
+-- Páginas
+CREATE TABLE pages (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuidv7(),
+  edition_id           UUID NOT NULL REFERENCES editions(id),
+  number               INTEGER NOT NULL,
+  original_image_path  VARCHAR(255) NOT NULL,
+  display_image_path   VARCHAR(255),
+  thumb_image_path     VARCHAR(255),
+  ocr_status           VARCHAR(50) NOT NULL DEFAULT 'waiting',
   ocr_confidence       NUMERIC(4,3),
   ocr_raw              JSONB,
-  conteudo_tsv         TSVECTOR,
+  tsv_content          TSVECTOR,
   deleted_at           TIMESTAMPTZ,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (edicao_id, numero)
+  UNIQUE (edition_id, number)
 );
 
 -- Histórico de jobs de OCR (A implementar futuramente)
 CREATE TABLE ocr_jobs (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  pagina_id    UUID NOT NULL REFERENCES paginas(id),
-  status       TEXT NOT NULL,
-  tentativa    INTEGER NOT NULL DEFAULT 1,
-  erro         TEXT,
-  iniciado_em  TIMESTAMPTZ,
-  concluido_em TIMESTAMPTZ,
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuidv7(),
+  page_id      UUID NOT NULL REFERENCES pages(id),
+  status       VARCHAR(50) NOT NULL,
+  attempt      INTEGER NOT NULL DEFAULT 1,
+  error        TEXT,
+  started_at   TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
@@ -293,9 +293,9 @@ CREATE INDEX idx_editions_source_id    ON editions (source_id);
 CREATE INDEX idx_editions_published_at ON editions (published_at);
 
 -- Futuros (quando implementados)
-CREATE INDEX paginas_tsv_idx           ON paginas USING GIN (conteudo_tsv);
-CREATE INDEX paginas_edicao_idx        ON paginas (edicao_id);
-CREATE INDEX paginas_status_idx        ON paginas (ocr_status);
+CREATE INDEX pages_tsv_idx           ON pages USING GIN (tsv_content);
+CREATE INDEX pages_edition_idx        ON pages (edition_id);
+CREATE INDEX pages_status_idx        ON pages (ocr_status);
 CREATE INDEX sessions_user_id_idx      ON sessions (user_id);
 ```
 
@@ -304,14 +304,14 @@ CREATE INDEX sessions_user_id_idx      ON sessions (user_id);
 ```sql
 CREATE OR REPLACE FUNCTION atualiza_tsv() RETURNS trigger AS $$
 BEGIN
-  NEW.conteudo_tsv :=
+  NEW.tsv_content :=
     to_tsvector('portuguese', COALESCE(NEW.ocr_raw->>'full_text', ''));
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER tgr_pagina_tsv
-  BEFORE INSERT OR UPDATE OF ocr_raw ON paginas
+CREATE TRIGGER tgr_page_tsv
+  BEFORE INSERT OR UPDATE OF ocr_raw ON pages
   FOR EACH ROW EXECUTE FUNCTION atualiza_tsv();
 ```
 

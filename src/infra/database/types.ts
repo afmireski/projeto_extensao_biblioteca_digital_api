@@ -22,6 +22,8 @@ export type JsonPrimitive = boolean | number | string | null;
 
 export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
+export type Numeric = ColumnType<string, number | string, number | string>;
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export type UserRole = 'manager' | 'reader';
@@ -44,6 +46,22 @@ export interface Editions {
   number: string | null;
   published_at: Timestamp | null;
   source_id: string;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface Pages {
+  created_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+  display_image_path: string | null;
+  edition_id: string;
+  id: Generated<string>;
+  number: number;
+  ocr_confidence: Numeric | null;
+  ocr_raw: Json | null;
+  ocr_status: Generated<string>;
+  original_image_path: string;
+  thumb_image_path: string | null;
+  tsv_content: string | null;
   updated_at: Generated<Timestamp>;
 }
 
@@ -80,6 +98,7 @@ export interface Users {
 export interface DB {
   collections: Collections;
   editions: Editions;
+  pages: Pages;
   sessions: Sessions;
   sources: Sources;
   users: Users;
