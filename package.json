@@ -11,6 +11,7 @@
     "migrate:up": "kysely migrate up",
     "migrate:down": "kysely migrate down",
     "migrate:status": "kysely migrate status",
+    "db:seed": "bun run src/infra/database/seed.ts",
     "test": "bun test",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint src/ tests/ --fix",
