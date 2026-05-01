@@ -40,7 +40,16 @@ export const parseOrder =
       return next();
     }
 
-    const result = schema.safeParse(req.query.order);
+    let orderData = req.query.order;
+    if (typeof orderData === 'string') {
+      try {
+        orderData = JSON.parse(orderData);
+      } catch (err) {
+        // If JSON.parse fails, let Zod catch the validation error
+      }
+    }
+
+    const result = schema.safeParse(orderData);
     if (!result.success) {
       return next(
         new ValidationError(
@@ -63,7 +72,16 @@ export const parseFilter =
       return next();
     }
 
-    const result = schema.safeParse(req.query.filters);
+    let filterData = req.query.filters;
+    if (typeof filterData === 'string') {
+      try {
+        filterData = JSON.parse(filterData);
+      } catch (err) {
+        // If JSON.parse fails, let Zod catch the validation error
+      }
+    }
+
+    const result = schema.safeParse(filterData);
     if (!result.success) {
       return next(
         new ValidationError(

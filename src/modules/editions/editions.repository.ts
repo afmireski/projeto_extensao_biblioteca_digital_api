@@ -120,11 +120,9 @@ export class EditionsRepository implements IEditionsRepository {
       .where('sources.deleted_at', 'is', null);
 
     const columnMap: Record<string, string> = {
+      source_id: 'editions.source_id',
       number: 'editions.number',
       published_at: 'editions.published_at',
-      source_name: 'sources.name',
-      source_type: 'sources.type',
-      source_language: 'sources.language',
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,12 +134,12 @@ export class EditionsRepository implements IEditionsRepository {
       created_at: 'editions.created_at',
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    query = applyOrder(query, order as any, orderColumnMap);
-
     const countQuery = query.select((eb) =>
       eb.fn.count<number>('editions.id').as('total'),
     );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = applyOrder(query, order as any, orderColumnMap);
 
     const dataQuery = applyPagination(query, pagination).select([
       'editions.id',

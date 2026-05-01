@@ -10,15 +10,16 @@ export const filterTextSchema = z
   })
   .optional();
 
-export const filterDateSchema = z
-  .object({
-    gte: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .optional(),
-    lte: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .optional(),
-  })
-  .optional();
+export const filterDateSchema = z.object({
+  gte: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+  lte: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+export const equalFilterTextSchema = z.object({
+  eq: z.string().optional(),
+});

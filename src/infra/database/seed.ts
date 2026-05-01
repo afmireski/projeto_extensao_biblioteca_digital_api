@@ -66,14 +66,14 @@ async function seed() {
           name: 'Revista Tecnologia e Sociedade',
           type: 'magazine',
           language: 'pt-BR',
-          collection_id: collections[0].id,
+          collection_id: collections[0]!.id,
           metadata: JSON.stringify({ publisher: 'UTFPR' }),
         },
         {
           name: 'O Diário do Paraná',
           type: 'newspaper',
           language: 'pt-BR',
-          collection_id: collections[1].id,
+          collection_id: collections[1]!.id,
           metadata: JSON.stringify({ frequency: 'daily' }),
         },
       ])
@@ -85,13 +85,13 @@ async function seed() {
       .insertInto('editions')
       .values([
         {
-          source_id: sources[0].id,
+          source_id: sources[0]!.id,
           number: 'Vol 1. Num 1.',
           notes: 'Primeira edição da revista.',
           published_at: new Date('2000-01-01'),
         },
         {
-          source_id: sources[1].id,
+          source_id: sources[1]!.id,
           number: 'Edição 154',
           notes: 'Edição comemorativa do aniversário da cidade.',
           published_at: new Date('1950-03-29'),

@@ -28,16 +28,13 @@ export interface UpdateEditionDTO {
   notes?: string;
 }
 
-import type { FilterRelation } from '../../shared/types/query';
+import type { FilterRelation, EqualFilter } from '../../shared/types/query';
 
 export interface ListEditionsFilters {
+  source_id: EqualFilter<string>;
   number?: FilterRelation<string>;
   published_at?: FilterRelation<string>;
-  source_name?: FilterRelation<string>;
-  source_type?: FilterRelation<string>;
-  source_language?: FilterRelation<string>;
 }
-
 export type ListEditionsOrderParams = Partial<
   Record<'number' | 'published_at' | 'created_at', 'asc' | 'desc'>
 >;

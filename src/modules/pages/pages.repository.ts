@@ -63,12 +63,12 @@ export class PagesRepository implements IPagesRepository {
     const appliedOrder =
       order && Object.keys(order).length > 0 ? order : { number: 'asc' };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    query = applyOrder(query, appliedOrder as any, orderColumnMap);
-
     const countQuery = query.select((eb) =>
       eb.fn.count<number>('pages.id').as('total'),
     );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    query = applyOrder(query, appliedOrder as any, orderColumnMap);
 
     const dataQuery = applyPagination(query, pagination).select([
       'pages.id',

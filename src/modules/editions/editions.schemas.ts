@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   filterTextSchema,
   filterDateSchema,
+  equalFilterTextSchema,
 } from '../../shared/schemas/query.schemas';
 
 // HTTP schema — snake_case input at the API boundary
@@ -45,11 +46,9 @@ export const updateEditionSchema = updateEditionHttpSchema.transform(
 );
 
 export const editionFilterSchema = z.object({
-  number: filterTextSchema,
-  published_at: filterDateSchema,
-  source_name: filterTextSchema,
-  source_type: filterTextSchema,
-  source_language: filterTextSchema,
+  source_id: equalFilterTextSchema,
+  number: filterTextSchema.optional(),
+  published_at: filterDateSchema.optional(),
 });
 
 export const editionOrderSchema = z.object({

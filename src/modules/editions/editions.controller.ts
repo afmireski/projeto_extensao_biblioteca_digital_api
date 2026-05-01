@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { EditionsService } from './editions.service';
+import type { ListEditionsFilters } from './editions.types';
 
 export class EditionsController {
   constructor(private readonly editionsService: EditionsService) {}
@@ -42,7 +43,11 @@ export class EditionsController {
 
   list = (req: Request, res: Response, next: NextFunction): void => {
     this.editionsService
-      .listEditions(req.filters, req.order, req.pagination)
+      .listEditions(
+        req.filters as unknown as ListEditionsFilters,
+        req.order,
+        req.pagination,
+      )
       .then((result) => {
         res.status(200).json(result);
       })

@@ -220,13 +220,13 @@ describe('EditionsService', () => {
       );
 
       const result = await service.listEditions(
-        {},
+        { source_id: { eq: 'source-uuid-1' } },
         {},
         { page: 1, limit: 10, offset: 0 },
       );
 
       expect(editionsRepository.list).toHaveBeenCalledWith(
-        {},
+        { source_id: { eq: 'source-uuid-1' } },
         {},
         { page: 1, limit: 10, offset: 0 },
       );
