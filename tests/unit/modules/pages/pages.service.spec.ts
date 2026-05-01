@@ -1,10 +1,12 @@
-import { describe, it, expect, mock, beforeEach } from 'bun:test';
+import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import type { IStorageAdapter } from '../../../../src/infra/storage/storage.interface';
+import type { IPagesRepository } from '../../../../src/modules/pages/pages.repository.port';
 import { PagesService } from '../../../../src/modules/pages/pages.service';
+import type { UploadFileDTO } from '../../../../src/modules/pages/pages.types';
 import {
   InternalError,
   NotFoundError,
 } from '../../../../src/shared/errors/app-errors';
-import type { UploadFileDTO } from '../../../../src/modules/pages/pages.types';
 
 // Mock do módulo de processamento de imagem
 mock.module('../../../../src/infra/image/image.processor', () => ({
@@ -19,8 +21,8 @@ mock.module('../../../../src/infra/image/image.processor', () => ({
 
 describe('PagesService', () => {
   let pagesService: PagesService;
-  let pagesRepositoryMock: any;
-  let storageAdapterMock: any;
+  let pagesRepositoryMock: IPagesRepository;
+  let storageAdapterMock: IStorageAdapter;
 
   beforeEach(() => {
     pagesRepositoryMock = {

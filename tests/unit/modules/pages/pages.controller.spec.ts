@@ -5,9 +5,11 @@ import { ValidationError } from '../../../../src/shared/errors/app-errors';
 
 describe('PagesController', () => {
   let pagesController: PagesController;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let pagesServiceMock: any;
   let req: Partial<Request>;
   let res: Partial<Response>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let next: any;
 
   beforeEach(() => {
