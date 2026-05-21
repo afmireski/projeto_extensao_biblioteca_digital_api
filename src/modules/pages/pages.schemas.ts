@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
-export const uploadBatchSchema = z.object({
+export const uploadPageSchema = z.object({
   edition_id: z.uuid('ID da edição inválido'),
-  starting_number: z.coerce
+  number: z.coerce
     .number()
     .int()
-    .min(1, 'O número inicial deve ser pelo menos 1'),
+    .min(1, 'O número da página deve ser pelo menos 1'),
 });
 
 export const deleteBatchSchema = z.object({

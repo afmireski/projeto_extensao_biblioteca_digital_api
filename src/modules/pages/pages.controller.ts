@@ -6,27 +6,27 @@ import type { UploadFileDTO } from './pages.types';
 export class PagesController {
   constructor(private readonly pagesService: PagesService) {}
 
-  uploadBatch = (req: Request, res: Response, next: NextFunction): void => {
-    const files = req.files as Express.Multer.File[];
-    if (!files || files.length === 0) {
+  upload = (req: Request, res: Response, next: NextFunction): void => {
+    const file = req.file;
+    if (!file) {
       return next(
         new ValidationError('Nenhuma imagem recebida', {
-          files: 'Obrigatório',
+          page: 'Obrigatório',
         }),
       );
     }
 
     const editionId = req.body.edition_id;
-    const startingNumber = req.body.starting_number;
+    const pageNumber = req.body.number;
 
-    const fileDTOs: UploadFileDTO[] = files.map((f) => ({
-      buffer: f.buffer,
-      mimetype: f.mimetype,
-      originalname: f.originalname,
-    }));
+    const fileDTO: UploadFileDTO = {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      originalname: file.originalname,
+    };
 
     this.pagesService
-      .uploadBatch(editionId, fileDTOs, startingNumber)
+      .uploadPage(editionId, fileDTO, pageNumber)
       .then(() => {
         res.status(201).send();
       })

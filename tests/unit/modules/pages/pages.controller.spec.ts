@@ -3,11 +3,12 @@ import type { Request, Response, NextFunction } from 'express';
 import { PagesController } from '../../../../src/modules/pages/pages.controller';
 import type { PagesService } from '../../../../src/modules/pages/pages.service';
 import { ValidationError } from '../../../../src/shared/errors/app-errors';
+import type { PageEntity } from '../../../../src/modules/pages/pages.types';
 
 describe('PagesController', () => {
   let pagesController: PagesController;
   let pagesServiceMock: PagesService & {
-    uploadBatch: ReturnType<typeof mock>;
+    uploadPage: ReturnType<typeof mock>;
     list: ReturnType<typeof mock>;
     deleteBatch: ReturnType<typeof mock>;
   };
@@ -17,11 +18,11 @@ describe('PagesController', () => {
 
   beforeEach(() => {
     pagesServiceMock = {
-      uploadBatch: mock(() => Promise.resolve([])),
+      uploadPage: mock(() => Promise.resolve({} as PageEntity)),
       list: mock(() => Promise.resolve({ data: [], metadata: {} })),
       deleteBatch: mock(() => Promise.resolve()),
     } as unknown as PagesService & {
-      uploadBatch: ReturnType<typeof mock>;
+      uploadPage: ReturnType<typeof mock>;
       list: ReturnType<typeof mock>;
       deleteBatch: ReturnType<typeof mock>;
     };
@@ -42,48 +43,56 @@ describe('PagesController', () => {
     next = mock();
   });
 
-  describe('uploadBatch', () => {
+  describe('upload', () => {
     it('deve processar upload com sucesso', async () => {
-      req.files = [
-        {
-          buffer: Buffer.from('mock'),
-          mimetype: 'image/jpeg',
-          originalname: '1.jpg',
-        } as Express.Multer.File,
-      ];
+      req.file = {
+        buffer: Buffer.from('mock'),
+        mimetype: 'image/jpeg',
+        originalname: '1.jpg',
+      } as Express.Multer.File;
       req.body = {
         edition_id: 'b0400000-0000-7000-8000-000000000000',
-        starting_number: 1,
+        number: 1,
       };
 
-      await pagesController.uploadBatch(req as Request, res as Response, next);
+      const mockPage = {
+        id: '1',
+        edition_id: 'b0400000-0000-7000-8000-000000000000',
+        number: 1,
+        original_image_path: 'p1',
+        display_image_path: 'd1',
+        thumb_image_path: 't1',
+        ocr_status: 'waiting',
+        ocr_confidence: null,
+      };
+      pagesServiceMock.uploadPage.mockResolvedValue(mockPage);
 
-      expect(pagesServiceMock.uploadBatch).toHaveBeenCalledWith(
+      await pagesController.upload(req as Request, res as Response, next);
+
+      expect(pagesServiceMock.uploadPage).toHaveBeenCalledWith(
         'b0400000-0000-7000-8000-000000000000',
-        [
-          {
-            buffer: expect.any(Buffer),
-            mimetype: 'image/jpeg',
-            originalname: '1.jpg',
-          },
-        ],
+        {
+          buffer: expect.any(Buffer),
+          mimetype: 'image/jpeg',
+          originalname: '1.jpg',
+        },
         1,
       );
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.send).toHaveBeenCalled();
     });
 
-    it('deve chamar next com ValidationError se array de files estiver vazio', async () => {
-      req.files = [];
+    it('deve chamar next com ValidationError se file estiver ausente', async () => {
+      req.file = undefined;
       req.body = {
         edition_id: 'b0400000-0000-7000-8000-000000000000',
-        starting_number: 1,
+        number: 1,
       };
 
-      await pagesController.uploadBatch(req as Request, res as Response, next);
+      await pagesController.upload(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalledWith(expect.any(ValidationError));
-      expect(pagesServiceMock.uploadBatch).not.toHaveBeenCalled();
+      expect(pagesServiceMock.uploadPage).not.toHaveBeenCalled();
     });
   });
 

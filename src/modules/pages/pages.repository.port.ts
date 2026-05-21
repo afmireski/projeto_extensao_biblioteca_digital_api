@@ -7,7 +7,7 @@ import type {
 import type { PaginationParams } from '../../shared/types/query';
 
 export interface IPagesRepository {
-  createMany(pages: CreatePageDTO[]): Promise<PageEntity[]>;
+  create(page: CreatePageDTO): Promise<PageEntity>;
   list(
     filters?: ListPagesFilters,
     order?: ListPagesOrderParams,

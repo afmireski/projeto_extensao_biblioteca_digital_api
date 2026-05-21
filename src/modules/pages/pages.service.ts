@@ -2,7 +2,6 @@ import type { IPagesRepository } from './pages.repository.port';
 import { generateVariants } from '../../infra/image/image.processor';
 import { InternalError, NotFoundError } from '../../shared/errors/app-errors';
 import type {
-  CreatePageDTO,
   PageEntity,
   UploadFileDTO,
   ListPagesFilters,
@@ -20,54 +19,48 @@ export class PagesService {
     private readonly storageAdapter: IStorageAdapter,
   ) {}
 
-  uploadBatch(
+  uploadPage(
     editionId: string,
-    files: UploadFileDTO[],
-    startingNumber: number,
-  ): Promise<PageEntity[]> {
-    const uploadPromises = files.map((file, index) => {
-      const pageNumber = startingNumber + index;
-      const key = randomUUIDv7();
+    file: UploadFileDTO,
+    pageNumber: number,
+  ): Promise<PageEntity> {
+    const key = randomUUIDv7();
 
-      return generateVariants(file)
-        .then(({ original, display, thumb }) => {
-          const ext = original.originalname.split('.').pop() || 'bin';
-          return Promise.all([
-            this.storageAdapter.upload(
-              'pages-originals',
-              `${key}/original.${ext}`,
-              original.buffer,
-              original.mimetype,
-            ),
-            this.storageAdapter.upload(
-              'pages-display',
-              `${key}/display.webp`,
-              display,
-              'image/webp',
-            ),
-            this.storageAdapter.upload(
-              'pages-thumb',
-              `${key}/thumb.webp`,
-              thumb,
-              'image/webp',
-            ),
-          ]);
-        })
-        .then(([originalRes, displayRes, thumbRes]) => {
-          return {
-            edition_id: editionId,
-            number: pageNumber,
-            original_image_path: originalRes.path,
-            display_image_path: displayRes.path,
-            thumb_image_path: thumbRes.path,
-          } satisfies CreatePageDTO;
+    return generateVariants(file)
+      .then(({ original, display, thumb }) => {
+        const ext = original.originalname.split('.').pop() || 'bin';
+        return Promise.all([
+          this.storageAdapter.upload(
+            'pages-originals',
+            `${key}/original.${ext}`,
+            original.buffer,
+            original.mimetype,
+          ),
+          this.storageAdapter.upload(
+            'pages-display',
+            `${key}/display.webp`,
+            display,
+            'image/webp',
+          ),
+          this.storageAdapter.upload(
+            'pages-thumb',
+            `${key}/thumb.webp`,
+            thumb,
+            'image/webp',
+          ),
+        ]);
+      })
+      .then(([originalRes, displayRes, thumbRes]) => {
+        return this.pagesRepository.create({
+          edition_id: editionId,
+          number: pageNumber,
+          original_image_path: originalRes.path,
+          display_image_path: displayRes.path,
+          thumb_image_path: thumbRes.path,
         });
-    });
-
-    return Promise.all(uploadPromises)
-      .then((createDtos) => this.pagesRepository.createMany(createDtos))
+      })
       .catch((err) => {
-        logger.error({ err, editionId }, 'Failed to upload batch pages');
+        logger.error({ err, editionId }, 'Failed to upload page');
         throw new InternalError({ cause: err });
       });
   }

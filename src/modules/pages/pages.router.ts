@@ -8,7 +8,7 @@ import {
   parseOrder,
 } from '../../shared/middleware/query.middleware';
 import {
-  uploadBatchSchema,
+  uploadPageSchema,
   deleteBatchSchema,
   pageFilterSchema,
   pageOrderSchema,
@@ -24,12 +24,12 @@ export const makePagesRouter = (
   const upload = multer({ storage: multer.memoryStorage() });
 
   router.post(
-    '/upload-batch',
+    '/upload',
     authMiddleware,
     requireRoles(['manager']),
-    upload.array('pages', 50),
-    validateBody(uploadBatchSchema),
-    pagesController.uploadBatch,
+    upload.single('page'),
+    validateBody(uploadPageSchema),
+    pagesController.upload,
   );
 
   router.get(

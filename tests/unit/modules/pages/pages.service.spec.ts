@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { IStorageAdapter } from '../../../../src/infra/storage/storage.interface';
 import type { IPagesRepository } from '../../../../src/modules/pages/pages.repository.port';
 import { PagesService } from '../../../../src/modules/pages/pages.service';
-import type { UploadFileDTO } from '../../../../src/modules/pages/pages.types';
+import type {
+  UploadFileDTO,
+  PageEntity,
+} from '../../../../src/modules/pages/pages.types';
 import {
   InternalError,
   NotFoundError,
@@ -22,7 +25,7 @@ mock.module('../../../../src/infra/image/image.processor', () => ({
 describe('PagesService', () => {
   let pagesService: PagesService;
   let pagesRepositoryMock: IPagesRepository & {
-    createMany: ReturnType<typeof mock>;
+    create: ReturnType<typeof mock>;
     list: ReturnType<typeof mock>;
     deleteManyByIds: ReturnType<typeof mock>;
   };
@@ -33,11 +36,11 @@ describe('PagesService', () => {
 
   beforeEach(() => {
     pagesRepositoryMock = {
-      createMany: mock(() => Promise.resolve([])),
+      create: mock(() => Promise.resolve({} as PageEntity)),
       list: mock(() => Promise.resolve({ data: [], total: 0 })),
       deleteManyByIds: mock(() => Promise.resolve([])),
     } as unknown as IPagesRepository & {
-      createMany: ReturnType<typeof mock>;
+      create: ReturnType<typeof mock>;
       list: ReturnType<typeof mock>;
       deleteManyByIds: ReturnType<typeof mock>;
     };
@@ -53,69 +56,46 @@ describe('PagesService', () => {
     pagesService = new PagesService(pagesRepositoryMock, storageAdapterMock);
   });
 
-  describe('uploadBatch', () => {
-    it('deve fazer upload de múltiplas páginas com sucesso', async () => {
+  describe('uploadPage', () => {
+    it('deve fazer upload de uma página com sucesso', async () => {
       const editionId = 'b0400000-0000-7000-8000-000000000000';
-      const files: UploadFileDTO[] = [
-        {
-          buffer: Buffer.from('1'),
-          mimetype: 'image/jpeg',
-          originalname: '1.jpg',
-        },
-        {
-          buffer: Buffer.from('2'),
-          mimetype: 'image/png',
-          originalname: '2.png',
-        },
-      ];
+      const file: UploadFileDTO = {
+        buffer: Buffer.from('1'),
+        mimetype: 'image/jpeg',
+        originalname: '1.jpg',
+      };
 
-      pagesRepositoryMock.createMany.mockResolvedValue([
-        {
-          id: '1',
-          number: 1,
-          original_image_path: 'p1',
-          edition_id: editionId,
-          display_image_path: 'd1',
-          thumb_image_path: 't1',
-          ocr_status: 'waiting',
-          ocr_confidence: null,
-        },
-        {
-          id: '2',
-          number: 2,
-          original_image_path: 'p2',
-          edition_id: editionId,
-          display_image_path: 'd2',
-          thumb_image_path: 't2',
-          ocr_status: 'waiting',
-          ocr_confidence: null,
-        },
-      ]);
+      pagesRepositoryMock.create.mockResolvedValue({
+        id: '1',
+        number: 1,
+        original_image_path: 'p1',
+        edition_id: editionId,
+        display_image_path: 'd1',
+        thumb_image_path: 't1',
+        ocr_status: 'waiting',
+        ocr_confidence: null,
+      });
 
-      const result = await pagesService.uploadBatch(editionId, files, 1);
+      const result = await pagesService.uploadPage(editionId, file, 1);
 
-      expect(storageAdapterMock.upload).toHaveBeenCalledTimes(6); // 2 arquivos * 3 variantes
-      expect(pagesRepositoryMock.createMany).toHaveBeenCalledTimes(1);
-      const callArgs = pagesRepositoryMock.createMany.mock!.calls[0]![0]!;
-      expect(callArgs).toHaveLength(2);
-      expect(callArgs[0].number).toBe(1);
-      expect(callArgs[1].number).toBe(2);
-      expect(result).toHaveLength(2);
+      expect(storageAdapterMock.upload).toHaveBeenCalledTimes(3); // 1 arquivo * 3 variantes
+      expect(pagesRepositoryMock.create).toHaveBeenCalledTimes(1);
+      const callArgs = pagesRepositoryMock.create.mock!.calls[0]![0]!;
+      expect(callArgs.number).toBe(1);
+      expect(result.id).toBe('1');
     });
 
     it('deve falhar com InternalError se repositório falhar', async () => {
-      pagesRepositoryMock.createMany.mockRejectedValue(new Error('DB Error'));
+      pagesRepositoryMock.create.mockRejectedValue(new Error('DB Error'));
 
       const editionId = 'b0400000-0000-7000-8000-000000000000';
-      const files: UploadFileDTO[] = [
-        {
-          buffer: Buffer.from('1'),
-          mimetype: 'image/jpeg',
-          originalname: '1.jpg',
-        },
-      ];
+      const file: UploadFileDTO = {
+        buffer: Buffer.from('1'),
+        mimetype: 'image/jpeg',
+        originalname: '1.jpg',
+      };
 
-      expect(pagesService.uploadBatch(editionId, files, 1)).rejects.toThrow(
+      expect(pagesService.uploadPage(editionId, file, 1)).rejects.toThrow(
         InternalError,
       );
     });

@@ -10,16 +10,16 @@ namespace BibliotecaDigital;
 @route("/api/pages")
 @tag("Pages")
 interface PagesRoutes {
-  @summary("Upload de Páginas em Lote")
-  @doc("Recebe imagens em formato multipart/form-data e as processa, vinculando a uma edição.")
+  @summary("Upload de Página")
+  @doc("Recebe uma imagem em formato multipart/form-data, processa e vincula a uma edição.")
   @post
-  @route("/upload-batch")
-  uploadBatch(
+  @route("/upload")
+  upload(
     @header contentType: "multipart/form-data",
     @multipartBody _: {
-      pages: HttpPart<bytes>[];
+      page: HttpPart<bytes>;
       edition_id: HttpPart<string>;
-      starting_number: HttpPart<int32>;
+      number: HttpPart<int32>;
     }
   ): {
     @statusCode statusCode: 201;

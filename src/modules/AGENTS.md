@@ -3,7 +3,9 @@
 This folder contains the core domain modules of the application.
 
 ## Structure
+
 Each module is a self-contained domain following a layered architecture:
+
 - `<module>.router.ts`: Express routes definition.
 - `<module>.controller.ts`: Handles HTTP requests/responses, delegating business logic to the service.
 - `<module>.service.ts`: Core business logic, independent of HTTP or database specifics. Uses dependency injection for repositories.
@@ -13,6 +15,7 @@ Each module is a self-contained domain following a layered architecture:
 - `<module>.types.ts`: TypeScript interfaces and types for the domain model and DTOs.
 
 ## Rules
+
 - **No Direct HTTP in Services**: Services must not know about `Request` or `Response`. They should return data or throw `AppError`.
 - **No DB Queries in Services**: Services must strictly use repository methods. No Kysely query building in the service layer.
 - **Dependency Injection**: Use Awilix for injecting dependencies into controllers and services.

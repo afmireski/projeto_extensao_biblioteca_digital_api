@@ -427,11 +427,11 @@ paths:
                     type: string
               required:
                 - page_ids
-  /api/pages/upload-batch:
+  /api/pages/upload:
     post:
-      operationId: PagesRoutes_uploadBatch
-      summary: Upload de Páginas em Lote
-      description: Recebe imagens em formato multipart/form-data e as processa, vinculando a uma edição.
+      operationId: PagesRoutes_upload
+      summary: Upload de Página
+      description: Recebe uma imagem em formato multipart/form-data, processa e vincula a uma edição.
       parameters: []
       responses:
         '201':
@@ -453,22 +453,20 @@ paths:
             schema:
               type: object
               properties:
-                pages:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
+                page:
+                  type: string
+                  format: binary
                 edition_id:
                   type: string
-                starting_number:
+                number:
                   type: integer
                   format: int32
               required:
-                - pages
+                - page
                 - edition_id
-                - starting_number
+                - number
             encoding:
-              starting_number:
+              number:
                 contentType: text/plain
   /api/sources/create:
     post:

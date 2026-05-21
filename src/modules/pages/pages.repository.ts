@@ -31,13 +31,13 @@ export class PagesRepository implements IPagesRepository {
     };
   }
 
-  createMany(pages: CreatePageDTO[]): Promise<PageEntity[]> {
+  create(page: CreatePageDTO): Promise<PageEntity> {
     return this.db
       .insertInto('pages')
-      .values(pages)
+      .values(page)
       .returningAll()
-      .execute()
-      .then((rows) => rows.map((r) => this.mapToPage(r)));
+      .executeTakeFirstOrThrow()
+      .then((row) => this.mapToPage(row));
   }
 
   list(
