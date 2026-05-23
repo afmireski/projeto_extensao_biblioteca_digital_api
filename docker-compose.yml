@@ -50,6 +50,20 @@ services:
         mc anonymous set download local/pages-thumb;
       "
 
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: biblioteca_rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"     # AMQP port
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
 volumes:
   postgres_data:
   minio_data:
+  rabbitmq_data:

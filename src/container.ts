@@ -1,6 +1,12 @@
 import { createContainer, asClass, asValue, InjectionMode } from 'awilix';
 import { db } from './infra/database/client';
 import { S3StorageAdapter } from './infra/storage/s3.adapter';
+import { RabbitMQService } from './infra/queue/rabbitmq.service';
+import { MockOcrClient } from './infra/ocr/mock-ocr-client';
+import { OcrRepository } from './modules/ocr/ocr.repository';
+import { OcrService } from './modules/ocr/ocr.service';
+import { OcrFacade } from './modules/ocr/ocr.facade';
+import { OcrConsumer } from './modules/ocr/ocr.consumer';
 
 const storageAdapter = process.env.STORAGE_ENDPOINT
   ? new S3StorageAdapter()
@@ -40,6 +46,8 @@ container.register({
   // Infrastructure
   db: asValue(db),
   storageAdapter: asValue(storageAdapter),
+  queueService: asClass(RabbitMQService).singleton(),
+  ocrClient: asClass(MockOcrClient).singleton(),
 
   // Repositories
   authRepository: asClass(AuthRepository).singleton(),
@@ -47,6 +55,7 @@ container.register({
   sourcesRepository: asClass(SourcesRepository).singleton(),
   editionsRepository: asClass(EditionsRepository).singleton(),
   pagesRepository: asClass(PagesRepository).singleton(),
+  ocrRepository: asClass(OcrRepository).singleton(),
 
   // Services
   jwtService: asClass(JwtService).singleton(),
@@ -55,6 +64,9 @@ container.register({
   sourcesService: asClass(SourcesService).singleton(),
   editionsService: asClass(EditionsService).singleton(),
   pagesService: asClass(PagesService).singleton(),
+  ocrService: asClass(OcrService).singleton(),
+  ocrFacade: asClass(OcrFacade).singleton(),
+  ocrConsumer: asClass(OcrConsumer).singleton(),
 
   // Controllers
   authController: asClass(AuthController).singleton(),

@@ -24,6 +24,8 @@ export type JsonValue = JsonArray | JsonObject | JsonPrimitive;
 
 export type Numeric = ColumnType<string, number | string, number | string>;
 
+export type OcrJobStatus = 'COMPLETED' | 'FAILED' | 'PENDING' | 'PROCESSING';
+
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
 export type UserRole = 'manager' | 'reader';
@@ -47,6 +49,22 @@ export interface Editions {
   published_at: Timestamp | null;
   source_id: string;
   updated_at: Generated<Timestamp>;
+}
+
+export interface OcrJobs {
+  attempt: Generated<number>;
+  completed_at: Timestamp | null;
+  /**
+   * Data em que o servico ficou pendente
+   */
+  created_at: Generated<Timestamp>;
+  error: string | null;
+  failed_at: Timestamp | null;
+  id: Generated<string>;
+  last_attempt_at: Generated<Timestamp>;
+  page_id: string;
+  processing_at: Timestamp | null;
+  status: OcrJobStatus;
 }
 
 export interface Pages {
@@ -98,6 +116,7 @@ export interface Users {
 export interface DB {
   collections: Collections;
   editions: Editions;
+  ocr_jobs: OcrJobs;
   pages: Pages;
   sessions: Sessions;
   sources: Sources;

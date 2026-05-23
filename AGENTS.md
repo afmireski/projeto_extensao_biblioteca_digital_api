@@ -323,4 +323,13 @@ são expostos ao cliente. O `debug` é logado via `logger.error` no servidor.
 
 ---
 
+## 16. Comunicação inter-módulos — Facades
+
+Para evitar acoplamento forte entre diferentes módulos de domínio, a comunicação entre eles deve ser mediada obrigatoriamente por um **Facade** (`*.facade.ts`).
+- Um módulo de domínio **nunca** deve interagir com os `Services` ou `Repositories` de outro módulo diretamente.
+- O Facade expõe operações de forma simples para consumo interno (outros módulos), encapsulando a complexidade e dependências de seu próprio módulo.
+- Nem toda operação do Facade precisará ter uma rota HTTP correspondente; o objetivo principal do Facade é servir de portão de entrada interno.
+
+---
+
 _Documento vivo — atualizar conforme novas decisões forem tomadas._

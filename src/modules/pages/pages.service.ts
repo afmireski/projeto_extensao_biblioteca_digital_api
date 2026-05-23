@@ -1,6 +1,7 @@
 import type { IPagesRepository } from './pages.repository.port';
 import { generateVariants } from '../../infra/image/image.processor';
 import { InternalError, NotFoundError } from '../../shared/errors/app-errors';
+import type { OcrFacade } from '../ocr/ocr.facade';
 import type {
   PageEntity,
   UploadFileDTO,
@@ -17,6 +18,7 @@ export class PagesService {
   constructor(
     private readonly pagesRepository: IPagesRepository,
     private readonly storageAdapter: IStorageAdapter,
+    private readonly ocrFacade: OcrFacade,
   ) {}
 
   uploadPage(
@@ -58,6 +60,15 @@ export class PagesService {
           display_image_path: displayRes.path,
           thumb_image_path: thumbRes.path,
         });
+      })
+      .then((page) => {
+        void this.ocrFacade.scheduleOcrJob(page.id).catch((err) => {
+          logger.error(
+            { err, pageId: page.id },
+            'Failed to schedule OCR job asynchronously',
+          );
+        });
+        return page;
       })
       .catch((err) => {
         logger.error({ err, editionId }, 'Failed to upload page');

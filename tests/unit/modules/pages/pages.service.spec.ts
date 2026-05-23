@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
 import type { IStorageAdapter } from '../../../../src/infra/storage/storage.interface';
 import type { IPagesRepository } from '../../../../src/modules/pages/pages.repository.port';
@@ -33,6 +34,9 @@ describe('PagesService', () => {
     upload: ReturnType<typeof mock>;
     delete: ReturnType<typeof mock>;
   };
+  let ocrFacadeMock: {
+    scheduleOcrJob: ReturnType<typeof mock>;
+  };
 
   beforeEach(() => {
     pagesRepositoryMock = {
@@ -53,7 +57,15 @@ describe('PagesService', () => {
       delete: ReturnType<typeof mock>;
     };
 
-    pagesService = new PagesService(pagesRepositoryMock, storageAdapterMock);
+    ocrFacadeMock = {
+      scheduleOcrJob: mock(() => Promise.resolve({} as any)),
+    };
+
+    pagesService = new PagesService(
+      pagesRepositoryMock,
+      storageAdapterMock,
+      ocrFacadeMock as any,
+    );
   });
 
   describe('uploadPage', () => {
@@ -83,6 +95,7 @@ describe('PagesService', () => {
       const callArgs = pagesRepositoryMock.create.mock!.calls[0]![0]!;
       expect(callArgs.number).toBe(1);
       expect(result.id).toBe('1');
+      expect(ocrFacadeMock.scheduleOcrJob).toHaveBeenCalledWith('1');
     });
 
     it('deve falhar com InternalError se repositório falhar', async () => {

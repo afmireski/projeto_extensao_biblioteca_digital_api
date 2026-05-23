@@ -193,6 +193,7 @@ Módulo exclusivo de leitura — não escreve nada.
 ## 4. Esquema do banco de dados
 
 ### Convenções
+
 - Chaves primárias: `UUID` geradas pelo Postgres (`uuidv7()`), ordenadas no tempo.
 - Timestamps: `created_at` e `updated_at` em todas as tabelas, gerenciados por trigger.
 - Soft delete: coluna `deleted_at TIMESTAMPTZ` presente em todas as tabelas atuais para auditoria.
@@ -276,9 +277,11 @@ CREATE TABLE ocr_jobs (
   status       VARCHAR(50) NOT NULL,
   attempt      INTEGER NOT NULL DEFAULT 1,
   error        TEXT,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   started_at   TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+  failed_at    TIMESTAMPTZ,
+  last_attempt_at TIMESTAMPTZ TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
@@ -324,6 +327,7 @@ CREATE TRIGGER tgr_page_tsv
 Os tipos TypeScript do banco são gerados automaticamente a partir da introspecção real do esquema pelo `kysely-codegen`. Eles ficam no arquivo [`src/infra/database/types.ts`](../src/infra/database/types.ts) e a instância do Kysely é tipada com ele (`export const db = new Kysely<DB>(...)`).
 
 **Para regenerar os tipos (após rodar uma nova migration):**
+
 ```sh
 bun run db:codegen
 ```
