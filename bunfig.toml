@@ -1,1 +1,2 @@
 [test]
+pathIgnorePatterns = ["**/tests/integration/e2e/**"]

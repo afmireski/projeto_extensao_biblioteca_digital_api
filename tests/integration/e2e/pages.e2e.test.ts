@@ -122,12 +122,19 @@ describeE2E('Pages E2E Tests', () => {
     expect(page).toBeDefined();
     expect(page!.number).toBe(1);
 
-    // Verify job created
-    const job = await db
-      .selectFrom('ocr_jobs')
-      .select('status')
-      .where('page_id', '=', page!.id)
-      .executeTakeFirst();
+    // Verify job created (poll since scheduling is asynchronous)
+    let job = undefined;
+    let jobAttempts = 0;
+    while (jobAttempts < 15) {
+      job = await db
+        .selectFrom('ocr_jobs')
+        .select('status')
+        .where('page_id', '=', page!.id)
+        .executeTakeFirst();
+      if (job) break;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      jobAttempts++;
+    }
     expect(job).toBeDefined();
   });
 

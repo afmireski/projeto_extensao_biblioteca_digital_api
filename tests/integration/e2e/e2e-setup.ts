@@ -41,9 +41,13 @@ export function validateE2EEnvironment() {
   }
 }
 
-const defaultPasswordHash = await Bun.password.hash('senha123');
+let defaultPasswordHash: string | null = null;
 
 export async function cleanTestDatabase() {
+  if (process.env.RUN_E2E !== 'true') {
+    return;
+  }
+
   const db = container.resolve('db') as Kysely<DB>;
   // Delete all sessions, ocr_jobs, editions, sources, collections
   await sql`TRUNCATE TABLE sessions, ocr_jobs, editions, sources, collections CASCADE`.execute(
@@ -53,14 +57,37 @@ export async function cleanTestDatabase() {
   await sql`DELETE FROM users WHERE email NOT IN ('manager@teste.com', 'reader@teste.com')`.execute(
     db,
   );
-  // Reset seeded users passwords to default 'senha123' to revert any password change tests
+
+  // Lazily hash default password once
+  if (!defaultPasswordHash) {
+    defaultPasswordHash = await Bun.password.hash('senha123');
+  }
+
+  // Reset seeded users passwords and names to default values to revert any profile update/password change tests
   await db
     .updateTable('users')
     .set({ password_hash: defaultPasswordHash })
     .execute();
+
+  await db
+    .updateTable('users')
+    .set({ name: 'Admin Manager' })
+    .where('email', '=', 'manager@teste.com')
+    .execute();
+
+  await db
+    .updateTable('users')
+    .set({ name: 'Reader User' })
+    .where('email', '=', 'reader@teste.com')
+    .execute();
 }
 
 export function setupE2ETestLifecycle() {
+  // If not E2E run, do not register beforeAll/afterAll hooks to prevent errors in unit tests
+  if (process.env.RUN_E2E !== 'true') {
+    return;
+  }
+
   beforeAll(async () => {
     validateE2EEnvironment();
 
