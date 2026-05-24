@@ -106,4 +106,28 @@ export class PagesRepository implements IPagesRepository {
       ])
       .execute();
   }
+
+  checkIfCanUpload(
+    editionId: string,
+    pageNumber: number,
+  ): Promise<{ hasEdition: boolean; pageNumberConflicts: boolean }> {
+    return Promise.all([
+      this.db
+        .selectFrom('editions')
+        .select('id')
+        .where('id', '=', editionId)
+        .where('deleted_at', 'is', null)
+        .executeTakeFirst(),
+      this.db
+        .selectFrom('pages')
+        .select('id')
+        .where('edition_id', '=', editionId)
+        .where('number', '=', pageNumber)
+        .where('deleted_at', 'is', null)
+        .executeTakeFirst(),
+    ]).then(([edition, page]) => ({
+      hasEdition: !!edition,
+      pageNumberConflicts: !!page,
+    }));
+  }
 }

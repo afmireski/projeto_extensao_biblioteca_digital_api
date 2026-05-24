@@ -10,7 +10,7 @@ import type {
   UpdateEditionDTO,
 } from './editions.types';
 import type { PaginationParams } from '../../shared/types/query';
-import { NotFoundError } from '../../shared/errors/app-errors';
+import { editionNotFound, sourceNotFound } from './editions.error';
 
 export class EditionsService {
   constructor(
@@ -21,7 +21,7 @@ export class EditionsService {
   createEdition(data: CreateEditionDTO): Promise<Edition> {
     return this.sourcesRepository.findById(data.sourceId).then((source) => {
       if (!source) {
-        throw new NotFoundError('source');
+        throw sourceNotFound();
       }
       return this.editionsRepository.create(data);
     });
@@ -30,7 +30,7 @@ export class EditionsService {
   getEditionById(id: string): Promise<EditionWithSource> {
     return this.editionsRepository.findById(id).then((edition) => {
       if (!edition) {
-        throw new NotFoundError('edition');
+        throw editionNotFound();
       }
       return edition;
     });
@@ -39,10 +39,10 @@ export class EditionsService {
   updateEdition(id: string, data: UpdateEditionDTO): Promise<Edition> {
     return this.editionsRepository.findById(id).then((existing) => {
       if (!existing) {
-        throw new NotFoundError('edition');
+        throw editionNotFound();
       }
       return this.editionsRepository.update(id, data).then((updated) => {
-        if (!updated) throw new NotFoundError('edition');
+        if (!updated) throw editionNotFound();
         return updated;
       });
     });
@@ -51,10 +51,10 @@ export class EditionsService {
   deleteEdition(id: string): Promise<void> {
     return this.editionsRepository.findById(id).then((existing) => {
       if (!existing) {
-        throw new NotFoundError('edition');
+        throw editionNotFound();
       }
       return this.editionsRepository.softDelete(id).then((success) => {
-        if (!success) throw new NotFoundError('edition');
+        if (!success) throw editionNotFound();
       });
     });
   }

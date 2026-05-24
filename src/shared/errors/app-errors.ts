@@ -14,37 +14,50 @@ export abstract class AppError extends Error {
 
 export class NotFoundError extends AppError {
   public readonly statusCode = 404;
-  public readonly code = 'resource.not_found';
+  public readonly code: string;
 
-  constructor(resource: string, debug?: unknown) {
+  constructor(resource: string, debug?: unknown, code = 'resource.not_found') {
     super(`Resource '${resource}' not found`, undefined, debug);
+    this.code = code;
   }
 }
 
 export class ValidationError extends AppError {
   public readonly statusCode = 400;
-  public readonly code = 'input.validation_error';
+  public readonly code: string;
 
-  constructor(message: string, details?: unknown, debug?: unknown) {
+  constructor(
+    message: string,
+    details?: unknown,
+    debug?: unknown,
+    code = 'input.validation_error',
+  ) {
     super(message, details, debug);
+    this.code = code;
   }
 }
 
 export class UnauthorizedError extends AppError {
   public readonly statusCode = 401;
-  public readonly code = 'auth.unauthorized';
+  public readonly code: string;
 
-  constructor(message = 'Unauthorized', debug?: unknown) {
+  constructor(
+    message = 'Unauthorized',
+    debug?: unknown,
+    code = 'auth.unauthorized',
+  ) {
     super(message, undefined, debug);
+    this.code = code;
   }
 }
 
 export class ForbiddenError extends AppError {
   public readonly statusCode = 403;
-  public readonly code = 'auth.forbidden';
+  public readonly code: string;
 
-  constructor(message = 'Forbidden', debug?: unknown) {
+  constructor(message = 'Forbidden', debug?: unknown, code = 'auth.forbidden') {
     super(message, undefined, debug);
+    this.code = code;
   }
 }
 

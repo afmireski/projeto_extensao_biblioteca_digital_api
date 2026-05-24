@@ -1,10 +1,10 @@
 import { expect, test, describe, mock, beforeEach } from 'bun:test';
 import type { Request, Response, NextFunction } from 'express';
-import { EditionsController } from '../../../src/modules/editions/editions.controller';
-import { EditionsService } from '../../../src/modules/editions/editions.service';
-import type { IEditionsRepository } from '../../../src/modules/editions/editions.repository.port';
-import type { ISourcesRepository } from '../../../src/modules/sources/sources.repository.port';
-import type { EditionWithSource } from '../../../src/modules/editions/editions.types';
+import { EditionsController } from '../../../../src/modules/editions/editions.controller';
+import { EditionsService } from '../../../../src/modules/editions/editions.service';
+import type { IEditionsRepository } from '../../../../src/modules/editions/editions.repository.port';
+import type { ISourcesRepository } from '../../../../src/modules/sources/sources.repository.port';
+import type { EditionWithSource } from '../../../../src/modules/editions/editions.types';
 
 describe('EditionsController', () => {
   let controller: EditionsController;

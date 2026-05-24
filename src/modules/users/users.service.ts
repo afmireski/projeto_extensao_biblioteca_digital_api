@@ -7,11 +7,11 @@ import type {
   UpdatePasswordInput,
 } from './users.types';
 import {
-  NotFoundError,
-  ConflictError,
-  ValidationError,
-  UnauthorizedError,
-} from '../../shared/errors/app-errors';
+  emailConflict,
+  userNotFound,
+  invalidOldPassword,
+  passwordsDoNotMatch,
+} from './users.error';
 import { logger } from '../../shared/logger';
 
 export class UserService {
@@ -25,7 +25,7 @@ export class UserService {
   public signup(input: SignupInput): Promise<SignupOutput> {
     return this.userRepository.emailExists(input.email).then((exists) => {
       if (exists) {
-        throw new ConflictError('user.email_conflict', 'Email already in use');
+        throw emailConflict(input.email);
       }
       return Bun.password
         .hash(input.password)
@@ -46,7 +46,7 @@ export class UserService {
   public getProfile(userId: string): Promise<ProfileOutput> {
     return this.userRepository.findActiveById(userId).then((user) => {
       if (!user) {
-        throw new NotFoundError('user');
+        throw userNotFound();
       }
       return {
         id: user.id,
@@ -94,16 +94,16 @@ export class UserService {
     input: UpdatePasswordInput,
   ): Promise<void> {
     if (input.password !== input.confirmPassword) {
-      return Promise.reject(new ValidationError('Passwords do not match'));
+      return Promise.reject(passwordsDoNotMatch());
     }
 
     return this.userRepository.findActiveById(userId).then((user) => {
-      if (!user) throw new NotFoundError('user');
+      if (!user) throw userNotFound();
 
       return Bun.password
         .verify(input.oldPassword, user.password_hash)
         .then((isValid) => {
-          if (!isValid) throw new UnauthorizedError('Invalid old password');
+          if (!isValid) throw invalidOldPassword();
           return Bun.password.hash(input.password);
         })
         .then((newHash) =>

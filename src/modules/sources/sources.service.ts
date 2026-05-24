@@ -8,7 +8,7 @@ import type {
   ListSourcesOrderParams,
 } from './sources.types';
 import type { PaginationParams } from '../../shared/types/query';
-import { NotFoundError } from '../../shared/errors/app-errors';
+import { sourceNotFound } from './sources.error';
 
 export class SourcesService {
   constructor(private readonly sourcesRepository: ISourcesRepository) {}
@@ -20,7 +20,7 @@ export class SourcesService {
   getSourceById(id: string): Promise<Source> {
     return this.sourcesRepository.findById(id).then((source) => {
       if (!source) {
-        throw new NotFoundError('Source not found');
+        throw sourceNotFound();
       }
       return source;
     });
@@ -29,10 +29,10 @@ export class SourcesService {
   updateSource(id: string, data: UpdateSourceDTO): Promise<Source> {
     return this.sourcesRepository.findById(id).then((existingSource) => {
       if (!existingSource) {
-        throw new NotFoundError('Source not found');
+        throw sourceNotFound();
       }
       return this.sourcesRepository.update(id, data).then((updatedSource) => {
-        if (!updatedSource) throw new NotFoundError('Source not found');
+        if (!updatedSource) throw sourceNotFound();
         return updatedSource;
       });
     });
@@ -41,10 +41,10 @@ export class SourcesService {
   deleteSource(id: string): Promise<void> {
     return this.sourcesRepository.findById(id).then((existingSource) => {
       if (!existingSource) {
-        throw new NotFoundError('Source not found');
+        throw sourceNotFound();
       }
       return this.sourcesRepository.softDelete(id).then((success) => {
-        if (!success) throw new NotFoundError('Source not found');
+        if (!success) throw sourceNotFound();
       });
     });
   }

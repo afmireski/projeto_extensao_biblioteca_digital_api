@@ -1,9 +1,9 @@
 import { expect, test, describe, mock, beforeEach } from 'bun:test';
 import type { Request, Response, NextFunction } from 'express';
-import { SourcesController } from '../../../src/modules/sources/sources.controller';
-import { SourcesService } from '../../../src/modules/sources/sources.service';
-import type { ISourcesRepository } from '../../../src/modules/sources/sources.repository.port';
-import type { Source } from '../../../src/modules/sources/sources.types';
+import { SourcesController } from '../../../../src/modules/sources/sources.controller';
+import { SourcesService } from '../../../../src/modules/sources/sources.service';
+import type { ISourcesRepository } from '../../../../src/modules/sources/sources.repository.port';
+import type { Source } from '../../../../src/modules/sources/sources.types';
 
 describe('SourcesController', () => {
   let controller: SourcesController;

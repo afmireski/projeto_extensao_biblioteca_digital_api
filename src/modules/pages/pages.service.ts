@@ -1,6 +1,11 @@
 import type { IPagesRepository } from './pages.repository.port';
 import { generateVariants } from '../../infra/image/image.processor';
-import { InternalError, NotFoundError } from '../../shared/errors/app-errors';
+import { AppError, InternalError } from '../../shared/errors/app-errors';
+import {
+  editionNotFound,
+  pageNumberConflict,
+  pagesNotFound,
+} from './pages.error';
 import type { OcrFacade } from '../ocr/ocr.facade';
 import type {
   PageEntity,
@@ -28,7 +33,17 @@ export class PagesService {
   ): Promise<PageEntity> {
     const key = randomUUIDv7();
 
-    return generateVariants(file)
+    return this.pagesRepository
+      .checkIfCanUpload(editionId, pageNumber)
+      .then(({ hasEdition, pageNumberConflicts }) => {
+        if (!hasEdition) {
+          throw editionNotFound();
+        }
+        if (pageNumberConflicts) {
+          throw pageNumberConflict(pageNumber);
+        }
+        return generateVariants(file);
+      })
       .then(({ original, display, thumb }) => {
         const ext = original.originalname.split('.').pop() || 'bin';
         return Promise.all([
@@ -71,6 +86,7 @@ export class PagesService {
         return page;
       })
       .catch((err) => {
+        if (err instanceof AppError) throw err;
         logger.error({ err, editionId }, 'Failed to upload page');
         throw new InternalError({ cause: err });
       });
@@ -124,7 +140,7 @@ export class PagesService {
       .deleteManyByIds(pageIds)
       .then((deletedPages) => {
         if (deletedPages.length === 0) {
-          throw new NotFoundError('pages');
+          throw pagesNotFound();
         }
 
         const deletePromises = deletedPages.flatMap((p) => {
@@ -165,7 +181,7 @@ export class PagesService {
         }
       })
       .catch((err) => {
-        if (err instanceof NotFoundError) throw err;
+        if (err instanceof AppError) throw err;
         logger.error({ err, pageIds }, 'Failed to delete batch pages');
         throw new InternalError({ cause: err });
       });

@@ -6,6 +6,23 @@ import type { IOcrClient } from '../../../../src/infra/ocr/ocr-client.interface'
 import type { OcrJobEntity } from '../../../../src/modules/ocr/ocr.types';
 import { InternalError } from '../../../../src/shared/errors/app-errors';
 
+const expectError = (
+  promise: Promise<unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errorClass: new (...args: any[]) => any,
+  code: string,
+): Promise<void> => {
+  return promise.then(
+    () => {
+      throw new Error('Expected promise to be rejected');
+    },
+    (err) => {
+      expect(err).toBeInstanceOf(errorClass);
+      expect((err as { code?: string }).code).toBe(code);
+    },
+  );
+};
+
 describe('OcrService', () => {
   let ocrService: OcrService;
   let ocrRepositoryMock: IOcrRepository & {
@@ -100,8 +117,10 @@ describe('OcrService', () => {
     it('deve lançar InternalError se a criação do job falhar', () => {
       ocrRepositoryMock.create.mockRejectedValue(new Error('Database error'));
 
-      return expect(ocrService.scheduleOcrJob('page-123')).rejects.toThrow(
+      return expectError(
+        ocrService.scheduleOcrJob('page-123'),
         InternalError,
+        'server.internal_error',
       );
     });
   });

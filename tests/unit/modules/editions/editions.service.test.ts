@@ -1,14 +1,31 @@
 import { expect, test, describe, mock, beforeEach } from 'bun:test';
-import { EditionsService } from '../../../src/modules/editions/editions.service';
-import type { IEditionsRepository } from '../../../src/modules/editions/editions.repository.port';
-import type { ISourcesRepository } from '../../../src/modules/sources/sources.repository.port';
-import { NotFoundError } from '../../../src/shared/errors/app-errors';
+import { EditionsService } from '../../../../src/modules/editions/editions.service';
+import type { IEditionsRepository } from '../../../../src/modules/editions/editions.repository.port';
+import type { ISourcesRepository } from '../../../../src/modules/sources/sources.repository.port';
+import { NotFoundError } from '../../../../src/shared/errors/app-errors';
 import type {
   Edition,
   EditionWithSource,
   CreateEditionDTO,
   UpdateEditionDTO,
-} from '../../../src/modules/editions/editions.types';
+} from '../../../../src/modules/editions/editions.types';
+
+const expectError = (
+  promise: Promise<unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errorClass: new (...args: any[]) => any,
+  code: string,
+): Promise<void> => {
+  return promise.then(
+    () => {
+      throw new Error('Expected promise to be rejected');
+    },
+    (err) => {
+      expect(err).toBeInstanceOf(errorClass);
+      expect((err as { code?: string }).code).toBe(code);
+    },
+  );
+};
 
 describe('EditionsService', () => {
   let editionsRepository: IEditionsRepository;
@@ -87,15 +104,20 @@ describe('EditionsService', () => {
       expect(result).toEqual(expectedEdition);
     });
 
-    test('should throw NotFoundError if source does not exist', async () => {
+    test('should throw NotFoundError if source does not exist', () => {
       const data: CreateEditionDTO = { sourceId: fakeSourceId };
 
       (sourcesRepository.findById as ReturnType<typeof mock>).mockResolvedValue(
         undefined,
       );
 
-      expect(service.createEdition(data)).rejects.toThrow(NotFoundError);
-      expect(editionsRepository.create).not.toHaveBeenCalled();
+      return expectError(
+        service.createEdition(data),
+        NotFoundError,
+        'editions.source_not_found',
+      ).then(() => {
+        expect(editionsRepository.create).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -112,12 +134,16 @@ describe('EditionsService', () => {
       expect(result).toEqual(expected);
     });
 
-    test('should throw NotFoundError if edition not found or source is deleted', async () => {
+    test('should throw NotFoundError if edition not found or source is deleted', () => {
       (
         editionsRepository.findById as ReturnType<typeof mock>
       ).mockResolvedValue(undefined);
 
-      expect(service.getEditionById('123')).rejects.toThrow(NotFoundError);
+      return expectError(
+        service.getEditionById('123'),
+        NotFoundError,
+        'editions.edition_not_found',
+      );
     });
   });
 
@@ -141,18 +167,21 @@ describe('EditionsService', () => {
       expect(result).toEqual(updated);
     });
 
-    test('should throw NotFoundError if edition does not exist or source is deleted', async () => {
+    test('should throw NotFoundError if edition does not exist or source is deleted', () => {
       (
         editionsRepository.findById as ReturnType<typeof mock>
       ).mockResolvedValue(undefined);
 
-      expect(service.updateEdition('123', { number: '43' })).rejects.toThrow(
+      return expectError(
+        service.updateEdition('123', { number: '43' }),
         NotFoundError,
-      );
-      expect(editionsRepository.update).not.toHaveBeenCalled();
+        'editions.edition_not_found',
+      ).then(() => {
+        expect(editionsRepository.update).not.toHaveBeenCalled();
+      });
     });
 
-    test('should throw NotFoundError if update returns undefined', async () => {
+    test('should throw NotFoundError if update returns undefined', () => {
       const existing = makeFakeEditionWithSource('123');
 
       (
@@ -162,8 +191,10 @@ describe('EditionsService', () => {
         undefined,
       );
 
-      expect(service.updateEdition('123', { number: '43' })).rejects.toThrow(
+      return expectError(
+        service.updateEdition('123', { number: '43' }),
         NotFoundError,
+        'editions.edition_not_found',
       );
     });
   });
@@ -185,16 +216,21 @@ describe('EditionsService', () => {
       expect(editionsRepository.softDelete).toHaveBeenCalledWith('123');
     });
 
-    test('should throw NotFoundError if edition does not exist or source is deleted', async () => {
+    test('should throw NotFoundError if edition does not exist or source is deleted', () => {
       (
         editionsRepository.findById as ReturnType<typeof mock>
       ).mockResolvedValue(undefined);
 
-      expect(service.deleteEdition('123')).rejects.toThrow(NotFoundError);
-      expect(editionsRepository.softDelete).not.toHaveBeenCalled();
+      return expectError(
+        service.deleteEdition('123'),
+        NotFoundError,
+        'editions.edition_not_found',
+      ).then(() => {
+        expect(editionsRepository.softDelete).not.toHaveBeenCalled();
+      });
     });
 
-    test('should throw NotFoundError if softDelete returns false', async () => {
+    test('should throw NotFoundError if softDelete returns false', () => {
       const existing = makeFakeEditionWithSource('123');
 
       (
@@ -204,7 +240,11 @@ describe('EditionsService', () => {
         editionsRepository.softDelete as ReturnType<typeof mock>
       ).mockResolvedValue(false);
 
-      expect(service.deleteEdition('123')).rejects.toThrow(NotFoundError);
+      return expectError(
+        service.deleteEdition('123'),
+        NotFoundError,
+        'editions.edition_not_found',
+      );
     });
   });
 

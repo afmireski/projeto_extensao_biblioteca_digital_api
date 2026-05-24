@@ -8,9 +8,26 @@ import type {
   PageEntity,
 } from '../../../../src/modules/pages/pages.types';
 import {
+  ConflictError,
   InternalError,
   NotFoundError,
 } from '../../../../src/shared/errors/app-errors';
+
+const expectError = (
+  promise: Promise<unknown>,
+  errorClass: new (...args: any[]) => any,
+  code: string,
+): Promise<void> => {
+  return promise.then(
+    () => {
+      throw new Error('Expected promise to be rejected');
+    },
+    (err) => {
+      expect(err).toBeInstanceOf(errorClass);
+      expect((err as { code?: string }).code).toBe(code);
+    },
+  );
+};
 
 // Mock do módulo de processamento de imagem
 mock.module('../../../../src/infra/image/image.processor', () => ({
@@ -29,6 +46,7 @@ describe('PagesService', () => {
     create: ReturnType<typeof mock>;
     list: ReturnType<typeof mock>;
     deleteManyByIds: ReturnType<typeof mock>;
+    checkIfCanUpload: ReturnType<typeof mock>;
   };
   let storageAdapterMock: IStorageAdapter & {
     upload: ReturnType<typeof mock>;
@@ -43,10 +61,14 @@ describe('PagesService', () => {
       create: mock(() => Promise.resolve({} as PageEntity)),
       list: mock(() => Promise.resolve({ data: [], total: 0 })),
       deleteManyByIds: mock(() => Promise.resolve([])),
+      checkIfCanUpload: mock(() =>
+        Promise.resolve({ hasEdition: true, pageNumberConflicts: false }),
+      ),
     } as unknown as IPagesRepository & {
       create: ReturnType<typeof mock>;
       list: ReturnType<typeof mock>;
       deleteManyByIds: ReturnType<typeof mock>;
+      checkIfCanUpload: ReturnType<typeof mock>;
     };
 
     storageAdapterMock = {
@@ -98,7 +120,7 @@ describe('PagesService', () => {
       expect(ocrFacadeMock.scheduleOcrJob).toHaveBeenCalledWith('1');
     });
 
-    it('deve falhar com InternalError se repositório falhar', async () => {
+    it('deve falhar com InternalError se repositório falhar', () => {
       pagesRepositoryMock.create.mockRejectedValue(new Error('DB Error'));
 
       const editionId = 'b0400000-0000-7000-8000-000000000000';
@@ -108,9 +130,55 @@ describe('PagesService', () => {
         originalname: '1.jpg',
       };
 
-      expect(pagesService.uploadPage(editionId, file, 1)).rejects.toThrow(
+      return expectError(
+        pagesService.uploadPage(editionId, file, 1),
         InternalError,
+        'server.internal_error',
       );
+    });
+
+    it('deve lançar NotFoundError se a edição não existir', () => {
+      pagesRepositoryMock.checkIfCanUpload.mockResolvedValue({
+        hasEdition: false,
+        pageNumberConflicts: false,
+      });
+
+      const editionId = 'b0400000-0000-7000-8000-000000000000';
+      const file: UploadFileDTO = {
+        buffer: Buffer.from('1'),
+        mimetype: 'image/jpeg',
+        originalname: '1.jpg',
+      };
+
+      return expectError(
+        pagesService.uploadPage(editionId, file, 1),
+        NotFoundError,
+        'pages.edition_not_found',
+      ).then(() => {
+        expect(pagesRepositoryMock.create).not.toHaveBeenCalled();
+      });
+    });
+
+    it('deve lançar ConflictError se o número da página estiver ocupado', () => {
+      pagesRepositoryMock.checkIfCanUpload.mockResolvedValue({
+        hasEdition: true,
+        pageNumberConflicts: true,
+      });
+
+      const editionId = 'b0400000-0000-7000-8000-000000000000';
+      const file: UploadFileDTO = {
+        buffer: Buffer.from('1'),
+        mimetype: 'image/jpeg',
+        originalname: '1.jpg',
+      };
+
+      return expectError(
+        pagesService.uploadPage(editionId, file, 1),
+        ConflictError,
+        'pages.page_number_conflict',
+      ).then(() => {
+        expect(pagesRepositoryMock.create).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -170,11 +238,16 @@ describe('PagesService', () => {
       expect(storageAdapterMock.delete).toHaveBeenCalledTimes(3); // original, display, thumb
     });
 
-    it('deve lançar NotFoundError se nenhuma página for deletada', async () => {
+    it('deve lançar NotFoundError se nenhuma página for deletada', () => {
       pagesRepositoryMock.deleteManyByIds.mockResolvedValue([]);
 
-      expect(pagesService.deleteBatch(['1'])).rejects.toThrow(NotFoundError);
-      expect(storageAdapterMock.delete).not.toHaveBeenCalled();
+      return expectError(
+        pagesService.deleteBatch(['1']),
+        NotFoundError,
+        'pages.pages_not_found',
+      ).then(() => {
+        expect(storageAdapterMock.delete).not.toHaveBeenCalled();
+      });
     });
   });
 });

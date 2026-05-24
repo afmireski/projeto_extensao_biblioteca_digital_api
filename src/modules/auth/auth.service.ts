@@ -1,7 +1,7 @@
 import type { IAuthRepository } from './auth.repository.port';
 import type { IJwtService } from '../../shared/services/jwt.service.port';
 import type { LoginInput, LoginOutput } from './auth.types';
-import { UnauthorizedError } from '../../shared/errors/app-errors';
+import { invalidCredentials } from './auth.error';
 import { addDays } from 'date-fns';
 import { logger } from '../../shared/logger';
 
@@ -22,7 +22,7 @@ export class AuthService {
       .findActiveUserByEmail(input.email)
       .then((user) => {
         if (!user) {
-          throw new UnauthorizedError('Invalid email or password');
+          throw invalidCredentials();
         }
         return Promise.all([
           user,
@@ -31,7 +31,7 @@ export class AuthService {
       })
       .then(([user, isPasswordValid]) => {
         if (!isPasswordValid) {
-          throw new UnauthorizedError('Invalid email or password');
+          throw invalidCredentials();
         }
 
         const expiryDays = process.env.JWT_EXPIRY_DAYS

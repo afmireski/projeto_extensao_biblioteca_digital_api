@@ -1,12 +1,29 @@
 import { expect, test, describe, mock, beforeEach } from 'bun:test';
-import { SourcesService } from '../../../src/modules/sources/sources.service';
-import type { ISourcesRepository } from '../../../src/modules/sources/sources.repository.port';
-import { NotFoundError } from '../../../src/shared/errors/app-errors';
+import { SourcesService } from '../../../../src/modules/sources/sources.service';
+import type { ISourcesRepository } from '../../../../src/modules/sources/sources.repository.port';
+import { NotFoundError } from '../../../../src/shared/errors/app-errors';
 import type {
   Source,
   CreateSourceDTO,
   UpdateSourceDTO,
-} from '../../../src/modules/sources/sources.types';
+} from '../../../../src/modules/sources/sources.types';
+
+const expectError = (
+  promise: Promise<unknown>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errorClass: new (...args: any[]) => any,
+  code: string,
+): Promise<void> => {
+  return promise.then(
+    () => {
+      throw new Error('Expected promise to be rejected');
+    },
+    (err) => {
+      expect(err).toBeInstanceOf(errorClass);
+      expect((err as { code?: string }).code).toBe(code);
+    },
+  );
+};
 
 describe('SourcesService', () => {
   let repository: ISourcesRepository;
@@ -71,13 +88,18 @@ describe('SourcesService', () => {
       expect(result).toEqual(expectedSource);
     });
 
-    test('should throw NotFoundError if not found', async () => {
+    test('should throw NotFoundError if not found', () => {
       (repository.findById as ReturnType<typeof mock>).mockResolvedValue(
         undefined,
       );
 
-      expect(service.getSourceById('123')).rejects.toThrow(NotFoundError);
-      expect(repository.findById).toHaveBeenCalledWith('123');
+      return expectError(
+        service.getSourceById('123'),
+        NotFoundError,
+        'sources.source_not_found',
+      ).then(() => {
+        expect(repository.findById).toHaveBeenCalledWith('123');
+      });
     });
   });
 
@@ -101,18 +123,21 @@ describe('SourcesService', () => {
       expect(result).toEqual(updatedSource);
     });
 
-    test('should throw NotFoundError if source does not exist', async () => {
+    test('should throw NotFoundError if source does not exist', () => {
       (repository.findById as ReturnType<typeof mock>).mockResolvedValue(
         undefined,
       );
 
-      expect(service.updateSource('123', { name: 'Updated' })).rejects.toThrow(
+      return expectError(
+        service.updateSource('123', { name: 'Updated' }),
         NotFoundError,
-      );
-      expect(repository.update).not.toHaveBeenCalled();
+        'sources.source_not_found',
+      ).then(() => {
+        expect(repository.update).not.toHaveBeenCalled();
+      });
     });
 
-    test('should throw NotFoundError if update fails (returns undefined)', async () => {
+    test('should throw NotFoundError if update fails (returns undefined)', () => {
       const existingSource = makeFakeSource('123');
       (repository.findById as ReturnType<typeof mock>).mockResolvedValue(
         existingSource,
@@ -121,8 +146,10 @@ describe('SourcesService', () => {
         undefined,
       );
 
-      expect(service.updateSource('123', { name: 'Updated' })).rejects.toThrow(
+      return expectError(
+        service.updateSource('123', { name: 'Updated' }),
         NotFoundError,
+        'sources.source_not_found',
       );
     });
   });
@@ -144,16 +171,21 @@ describe('SourcesService', () => {
       expect(repository.softDelete).toHaveBeenCalledWith('123');
     });
 
-    test('should throw NotFoundError if source does not exist', async () => {
+    test('should throw NotFoundError if source does not exist', () => {
       (repository.findById as ReturnType<typeof mock>).mockResolvedValue(
         undefined,
       );
 
-      expect(service.deleteSource('123')).rejects.toThrow(NotFoundError);
-      expect(repository.softDelete).not.toHaveBeenCalled();
+      return expectError(
+        service.deleteSource('123'),
+        NotFoundError,
+        'sources.source_not_found',
+      ).then(() => {
+        expect(repository.softDelete).not.toHaveBeenCalled();
+      });
     });
 
-    test('should throw NotFoundError if softDelete returns false', async () => {
+    test('should throw NotFoundError if softDelete returns false', () => {
       const existingSource = makeFakeSource('123');
 
       (repository.findById as ReturnType<typeof mock>).mockResolvedValue(
@@ -163,7 +195,11 @@ describe('SourcesService', () => {
         false,
       );
 
-      expect(service.deleteSource('123')).rejects.toThrow(NotFoundError);
+      return expectError(
+        service.deleteSource('123'),
+        NotFoundError,
+        'sources.source_not_found',
+      );
     });
   });
 

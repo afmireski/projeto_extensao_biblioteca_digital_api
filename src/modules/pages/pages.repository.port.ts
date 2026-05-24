@@ -14,4 +14,8 @@ export interface IPagesRepository {
     pagination?: PaginationParams,
   ): Promise<{ data: PageEntity[]; total: number }>;
   deleteManyByIds(pageIds: string[]): Promise<PageEntity[]>;
+  checkIfCanUpload(
+    editionId: string,
+    pageNumber: number,
+  ): Promise<{ hasEdition: boolean; pageNumberConflicts: boolean }>;
 }
