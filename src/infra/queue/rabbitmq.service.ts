@@ -8,6 +8,9 @@ export class RabbitMQService implements IQueueService {
   private channel: amqp.Channel | null = null;
 
   connect(): Promise<void> {
+    if (this.connection) {
+      return Promise.resolve();
+    }
     const url = process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672';
     const delayMs = Number(process.env.OCR_JOB_RETRY_DELAY_MS || '300000');
     logger.info({ url, delayMs }, 'Connecting to RabbitMQ');
@@ -147,15 +150,30 @@ export class RabbitMQService implements IQueueService {
   }
 
   close(): Promise<void> {
-    const closeChannel = this.channel
-      ? this.channel.close()
-      : Promise.resolve();
-    const closeConn = this.connection
-      ? this.connection.close()
+    if (!this.connection) {
+      return Promise.resolve();
+    }
+
+    const closeChannelPromise = this.channel
+      ? this.channel.close().catch((err) => {
+          logger.warn(
+            { err },
+            'Error closing RabbitMQ channel during teardown',
+          );
+        })
       : Promise.resolve();
 
-    return closeChannel
-      .then(() => closeConn)
+    return closeChannelPromise
+      .then(() => {
+        return this.connection
+          ? this.connection.close().catch((err) => {
+              logger.warn(
+                { err },
+                'Error closing RabbitMQ connection during teardown',
+              );
+            })
+          : Promise.resolve();
+      })
       .then(() => {
         this.channel = null;
         this.connection = null;

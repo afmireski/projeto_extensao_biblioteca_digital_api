@@ -3,12 +3,18 @@ import type { OcrService } from './ocr.service';
 import { logger } from '../../shared/logger';
 
 export class OcrConsumer {
+  private started = false;
+
   constructor(
     private readonly queueService: IQueueService,
     private readonly ocrService: OcrService,
   ) {}
 
   start(): Promise<void> {
+    if (this.started) {
+      return Promise.resolve();
+    }
+    this.started = true;
     return this.queueService.consume(
       'ocr.process.queue',
       (content, ack, nack) => {
