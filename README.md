@@ -144,6 +144,18 @@ Quando você envia código para o GitHub, o projeto executa pipelines automátic
 *   **Teste (`test.yml`)**: Dispara automaticamente a cada `push` em qualquer branch e em `pull_requests` direcionados à branch `main`. Este workflow configura o ambiente Bun, instala dependências e executa os testes unitários (`bun test`). Como os testes E2E estão ignorados por padrão no `bunfig.toml`, eles não são executados nesse workflow, mantendo a pipeline rápida e sem necessidade de provisionamento de múltiplos containers de banco/filas na nuvem.
 *   **Linter (`lint.yml`)**: Dispara em `push` e `pull_requests` para a branch `main`, rodando o comando `bun run lint` para garantir a conformidade estética do código.
 
+## 🔗 Acessos Rápidos e Utilidades
+
+Quando a infraestrutura estiver rodando localmente (seja no Setup Híbrido ou no Setup 100% Docker), você poderá acessar os seguintes painéis e utilitários:
+
+*   **API Principal**: `http://localhost:3000`
+*   **Console do MinIO (S3 Web UI)**: [http://localhost:9001](http://localhost:9001)
+    *   *Credenciais*: `minioadmin` / `minioadmin`
+    *   *Uso*: Permite inspecionar visualmente os buckets de imagens (`pages-originals`, `pages-display`, `pages-thumb`).
+*   **Painel do RabbitMQ (Management UI)**: [http://localhost:15672](http://localhost:15672)
+    *   *Credenciais*: `guest` / `guest`
+    *   *Uso*: Permite monitorar filas de mensagens, exchanges e o andamento dos processos assíncronos de OCR.
+
 ---
 
 ## 📚 Leitura Recomendada para Contribuidores
