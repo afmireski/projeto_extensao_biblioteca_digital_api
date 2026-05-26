@@ -5,6 +5,7 @@
   "scripts": {
     "start:dev": "bun run --hot src/server.ts",
     "start:dev:debug": "bun run --hot --inspect src/server.ts",
+    "start:dev:docker": "docker compose -f docker-compose.dev.yml up",
     "db:codegen": "kysely-codegen",
     "docs:compile": "tsp compile docs/api/main.tsp",
     "migrate:make": "kysely migrate make",

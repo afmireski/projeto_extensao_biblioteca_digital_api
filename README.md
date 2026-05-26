@@ -31,7 +31,11 @@ Certifique-se de ter instalado em seu ambiente:
 
 ## ⚙️ Configuração e Inicialização
 
-Siga os passos abaixo para configurar e rodar o projeto localmente em desenvolvimento:
+Existem duas formas de rodar a aplicação localmente: usando o setup híbrido (API rodando localmente com Bun e serviços auxiliares no Docker) ou o setup 100% Docker (API e serviços rodando inteiramente dentro do Docker).
+
+### Opção 1: Setup Híbrido (Local com Bun + Infra no Docker)
+
+Esta opção é a recomendada para desenvolvimento ativo da API, pois utiliza a execução nativa do Bun de forma rápida.
 
 **1. Instale as dependências**
 ```bash
@@ -39,38 +43,66 @@ bun install
 ```
 
 **2. Configure as variáveis de ambiente**
-Duplique o arquivo de exemplo para gerar o arquivo de configuração real:
+Crie o arquivo `.env` a partir do modelo de exemplo:
 ```bash
 cp .env.example .env
 ```
-*(Os valores padrão do arquivo `.env.example` já estão pré-configurados para rodar localmente com os containers do Docker compose).*
+*(Os valores padrão no `.env.example` já estão apontados para a infraestrutura do Docker Compose rodando em `localhost`).*
 
 **3. Suba os serviços auxiliares (Infraestrutura)**
-Suba o Postgres, RabbitMQ e MinIO localmente usando Docker Compose:
+Inicie o banco PostgreSQL, o RabbitMQ e o MinIO no Docker:
 ```bash
 docker compose up -d
 ```
 
 **4. Execute as Migrações**
-Crie as tabelas necessárias no banco rodando as migrações mais recentes:
+Crie a estrutura de tabelas executando as migrações:
 ```bash
 bun run migrate:latest
 ```
 
 **5. Semeie o Banco de Dados (Opcional)**
-Preencha o banco com alguns dados fictícios e usuários padrão para testes de desenvolvimento:
+Insira dados padrão e contas de teste:
 ```bash
 bun run db:seed
 ```
-*Usuários padrão criados no seed:*
-*   **Gestor (Manager)**: `manager@teste.com` (senha: `senha123`)
-*   **Leitor (Reader)**: `reader@teste.com` (senha: `senha123`)
 
-**6. Inicie o servidor da API**
+**6. Inicie a API localmente**
 ```bash
 bun run start:dev
 ```
-A API iniciará na porta configurada no `.env` (porta padrão: `3000`) com hot-reload ativo.
+A API rodará na porta configurada (padrão `3000`) com hot-reload ativo.
+
+---
+
+### Opção 2: Setup 100% Docker (API + Infra no Docker)
+
+Esta opção é ideal para rodar todo o ecossistema rapidamente sem precisar instalar o Bun na máquina host ou para testar em ambientes isolados.
+
+**1. Configure as variáveis de ambiente**
+Crie o arquivo `.env` a partir do modelo de exemplo:
+```bash
+cp .env.example .env
+```
+
+**2. Inicie todo o ecossistema**
+Você pode iniciar o compose com o atalho do Bun:
+```bash
+bun run start:dev:docker
+```
+Ou rodar o comando do Docker Compose diretamente (use `-d` se preferir rodar em segundo plano):
+```bash
+docker compose -f docker-compose.dev.yml up
+```
+*(O compose está configurado para aguardar que o banco de dados, storage e filas fiquem totalmente saudáveis. Em seguida, roda automaticamente as migrações de banco, o seed de desenvolvimento e inicia a API na porta `3000`).*
+
+**Desenvolvimento Ativo e Hot-Reload**: O `docker-compose.dev.yml` monta a pasta local `./src` como volume no container da aplicação, o que significa que qualquer alteração de código feita localmente será refletida e reiniciada instantaneamente por meio do hot-reload do Bun.
+
+---
+
+*Usuários padrão criados no seed (disponíveis em ambos os setups):*
+*   **Gestor (Manager)**: `manager@teste.com` (senha: `senha123`)
+*   **Leitor (Reader)**: `reader@teste.com` (senha: `senha123`)
 
 ---
 
@@ -81,6 +113,7 @@ Abaixo estão listados os principais scripts definidos no `package.json` para de
 | Comando | Descrição |
 | :--- | :--- |
 | `bun run start:dev` | Roda o servidor HTTP em ambiente de desenvolvimento com hot-reload. |
+| `bun run start:dev:docker` | Constrói a imagem da API e inicia todo o ecossistema integrado (infra + app) no Docker. |
 | `bun run db:codegen` | Inspeciona o banco de dados e gera/atualiza as tipagens TypeScript das tabelas no arquivo `types.ts` via `kysely-codegen`. |
 | `bun run migrate:make <nome>` | Cria um novo arquivo de migração na pasta `src/infra/database/migrations/`. |
 | `bun run migrate:latest` | Executa todas as migrações pendentes no banco. |
