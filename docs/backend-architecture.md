@@ -1,7 +1,7 @@
 # Arquitetura do Backend — Digitalizador com OCR para Fontes Históricas
 
-**Versão:** 0.3  
-**Stack:** Bun · TypeScript · Express · PostgreSQL · Kysely · Awilix  
+**Versão:** 1.0 (Atualizada)  
+**Stack:** Bun · TypeScript · Express · PostgreSQL · Kysely · Awilix · RabbitMQ · MinIO (S3)  
 **Escopo:** Backend apenas
 
 ---
@@ -11,7 +11,7 @@
 O backend segue uma arquitetura em camadas com módulos por domínio. Cada módulo é
 autocontido: tem seu roteador, controller, service e repositório. A inversão de
 dependência é feita via container Awilix, o que permite trocar implementações
-(ex.: storage local → S3) sem tocar nas regras de negócio.
+(ex.: storage local → S3/MinIO) sem tocar nas regras de negócio.
 
 ```
 HTTP Request
@@ -21,7 +21,7 @@ HTTP Request
                             └── IRepository  ← port: interface definida dentro do módulo
                             │       └── Repository  ← adapter: implementação Kysely
                             └── IStorageAdapter  ← port: interface em infra/storage
-                                    └── LocalStorageAdapter  ← adapter: implementação local
+                                    └── S3StorageAdapter  ← adapter: implementação S3/MinIO
 ```
 
 Nenhuma camada "pula" outra. Controller não acessa repositório diretamente. Service
@@ -40,89 +40,123 @@ não sabe nada de HTTP nem de Kysely — depende apenas das interfaces (ports).
 │   │
 │   ├── modules/
 │   │   ├── auth/
-│   │   │   ├── auth.router.ts
 │   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.error.ts
+│   │   │   ├── auth.repository.port.ts    # interface IAuthRepository (Port)
+│   │   │   ├── auth.repository.ts         # implementação Kysely (Adapter)
+│   │   │   ├── auth.router.ts
+│   │   │   ├── auth.schemas.ts
 │   │   │   ├── auth.service.ts
-│   │   │   ├── auth.repository.port.ts    # interface IAuthRepository
-│   │   │   ├── auth.repository.ts         # implementação Kysely
 │   │   │   └── auth.types.ts
 │   │   │
-│   │   ├── acervo/
-│   │   │   ├── acervo.router.ts
-│   │   │   ├── acervo.controller.ts
-│   │   │   ├── acervo.service.ts
-│   │   │   ├── acervo.repository.port.ts  # interface IAcervoRepository
-│   │   │   ├── acervo.repository.ts       # implementação Kysely
-│   │   │   └── acervo.types.ts
+│   │   ├── users/
+│   │   │   ├── users.controller.ts
+│   │   │   ├── users.error.ts
+│   │   │   ├── users.repository.port.ts   # interface IUserRepository (Port)
+│   │   │   ├── users.repository.ts        # implementação Kysely (Adapter)
+│   │   │   ├── users.router.ts
+│   │   │   ├── users.schemas.ts
+│   │   │   ├── users.service.ts
+│   │   │   └── users.types.ts
 │   │   │
-│   │   ├── fonte/
-│   │   │   ├── fonte.router.ts
-│   │   │   ├── fonte.controller.ts
-│   │   │   ├── fonte.service.ts
-│   │   │   ├── fonte.repository.port.ts   # interface IFonteRepository
-│   │   │   ├── fonte.repository.ts        # implementação Kysely
-│   │   │   └── fonte.types.ts
+│   │   ├── sources/
+│   │   │   ├── sources.controller.ts
+│   │   │   ├── sources.error.ts
+│   │   │   ├── sources.repository.port.ts # interface ISourcesRepository (Port)
+│   │   │   ├── sources.repository.ts      # implementação Kysely (Adapter)
+│   │   │   ├── sources.router.ts
+│   │   │   ├── sources.schemas.ts
+│   │   │   ├── sources.service.ts
+│   │   │   └── sources.types.ts
 │   │   │
-│   │   ├── edicao/
-│   │   │   ├── edicao.router.ts
-│   │   │   ├── edicao.controller.ts
-│   │   │   ├── edicao.service.ts
-│   │   │   ├── edicao.repository.port.ts  # interface IEdicaoRepository
-│   │   │   ├── edicao.repository.ts       # implementação Kysely
-│   │   │   └── edicao.types.ts
+│   │   ├── editions/
+│   │   │   ├── editions.controller.ts
+│   │   │   ├── editions.error.ts
+│   │   │   ├── editions.repository.port.ts # interface IEditionsRepository (Port)
+│   │   │   ├── editions.repository.ts      # implementação Kysely (Adapter)
+│   │   │   ├── editions.router.ts
+│   │   │   ├── editions.schemas.ts
+│   │   │   ├── editions.service.ts
+│   │   │   └── editions.types.ts
 │   │   │
 │   │   ├── pages/
-│   │   │   ├── pages.router.ts
 │   │   │   ├── pages.controller.ts
+│   │   │   ├── pages.error.ts
+│   │   │   ├── pages.repository.port.ts   # interface IPagesRepository (Port)
+│   │   │   ├── pages.repository.ts        # implementação Kysely (Adapter)
+│   │   │   ├── pages.router.ts
+│   │   │   ├── pages.schemas.ts
 │   │   │   ├── pages.service.ts
-│   │   │   ├── pages.repository.port.ts  # interface IPagesRepository
-│   │   │   ├── pages.repository.ts       # implementação Kysely
 │   │   │   └── pages.types.ts
 │   │   │
-│   │   └── busca/
-│   │       ├── busca.router.ts
-│   │       ├── busca.controller.ts
-│   │       ├── busca.service.ts
-│   │       └── busca.types.ts             # sem repositório — leitura direta via Kysely injetado
+│   │   └── ocr/
+│   │       ├── ocr.consumer.ts            # Consumidor de OCR (escuta a fila do RabbitMQ)
+│   │       ├── ocr.error.ts
+│   │       ├── ocr.facade.ts              # Facade para comunicação inter-módulos
+│   │       ├── ocr.repository.port.ts     # interface IOcrRepository (Port)
+│   │       ├── ocr.repository.ts          # implementação Kysely (Adapter)
+│   │       ├── ocr.service.ts
+│   │       └── ocr.types.ts
 │   │
 │   ├── infra/
 │   │   ├── database/
-│   │   │   ├── client.ts          # Instância do Kysely + pool (pg)
-│   │   │   ├── types.ts           # Database interface (tabelas tipadas para o Kysely)
-│   │   │   └── migrations/        # Arquivos gerenciados pelo Kysely Migrator
-│   │   │                          # Ex.: 2024-01-01-init.ts, 2024-01-02-add-tsv.ts
+│   │   │   ├── client.ts                  # Instância do Kysely + pool (pg)
+│   │   │   ├── seed.ts                    # Script de semeadura do banco
+│   │   │   ├── types.ts                   # Interfaces de banco geradas pelo kysely-codegen
+│   │   │   └── migrations/                # Migrações gerenciadas pelo kysely-ctl
+│   │   │
+│   │   ├── image/
+│   │   │   └── image.processor.ts         # Processamento e otimização de imagens (Sharp)
+│   │   │
+│   │   ├── ocr/
+│   │   │   ├── ocr-client.interface.ts    # Interface do cliente de OCR (Port)
+│   │   │   └── mock-ocr-client.ts         # Implementação mockada de OCR (Adapter)
+│   │   │
+│   │   ├── queue/
+│   │   │   ├── queue.interface.ts         # Interface do serviço de fila (Port)
+│   │   │   └── rabbitmq.service.ts        # Implementação concreta do RabbitMQ (Adapter)
 │   │   │
 │   │   └── storage/
-│   │       ├── storage.interface.ts   # IStorageAdapter
-│   │       └── local.adapter.ts       # Implementação local (MVP)
+│   │       ├── storage.interface.ts       # Interface de Storage (Port)
+│   │       └── s3.adapter.ts              # Implementação de S3/MinIO (Adapter)
 │   │
 │   └── shared/
 │       ├── middleware/
-│       │   ├── auth.middleware.ts     # Verifica JWT, popula req.user
-│       │   ├── role.middleware.ts     # Verifica perfil (leitor / gestor)
-│       │   └── error.middleware.ts    # Handler global de erros
+│       │   ├── auth.middleware.ts         # Verifica JWT, popula req.user
+│       │   ├── error.middleware.ts        # Handler global de erros
+│       │   ├── query.middleware.ts        # Parser e validador de paginação/filtros/ordenação
+│       │   ├── role.middleware.ts         # Validação de perfil (manager / reader)
+│       │   └── validate.middleware.ts     # Validador de payloads Zod
 │       │
 │       ├── errors/
-│       │   └── app-errors.ts
+│       │   └── app-errors.ts              # Classes de erro customizadas (AppError)
+│       │
+│       ├── schemas/                       # Esquemas Zod compartilhados
+│       │
+│       ├── services/
+│       │   ├── jwt.service.port.ts        # Interface IJwtService (Port)
+│       │   └── jwt.service.ts             # Implementação de JWT (jose) (Adapter)
 │       │
 │       └── types/
-│           └── express.d.ts           # Augment de Request (req.user, req.container)
+│           ├── express.d.ts               # Tipagens estendidas para Express (Request)
+│           └── query.d.ts                 # Tipos genéricos de filtros e ordenação
 │
 ├── tests/
-│   ├── unit/                          # Por módulo, espelha src/modules
-│   └── integration/                   # Testa o endpoint de ponta a ponta com banco real
+│   ├── unit/                              # Testes unitários espelhando src/modules/
+│   └── integration/                       # Testes de integração e2e
 │
 ├── docs/
+│   ├── backend-architecture.md            # Este documento de arquitetura
 │   └── api/
-│       ├── main.tsp                   # Entrypoint do TypeSpec
-│       ├── models/                    # Modelos de dados (.tsp)
-│       └── routes/                    # Definições de rotas por módulo (.tsp)
-│
-├── scripts/
-│   └── migrate.ts                     # Runner de migrations Kysely
+│       ├── main.tsp                       # Entrypoint do TypeSpec
+│       ├── models/                        # Modelos de dados do TypeSpec (.tsp)
+│       └── routes/                        # Definições de rotas (.tsp)
 │
 ├── .env.example
+├── .env.e2e
 ├── bunfig.toml
+├── docker-compose.yml
+├── docker-compose.test.yml
 ├── tsconfig.json
 └── package.json
 ```
@@ -133,60 +167,60 @@ não sabe nada de HTTP nem de Kysely — depende apenas das interfaces (ports).
 
 ### 3.1 `auth`
 
-Gerencia autenticação e sessão via email + senha com JWT.
+Gerencia a autenticação e sessões de usuários.
 
-- **Fluxo:** `POST /auth/login` recebe credenciais → service valida senha com
-  `Bun.password.verify` → registra uma sessão ativa no banco e emite JWT assinado contendo o ID da sessão. `POST /users/signup` cria o usuário
-  com hash gerado por `Bun.password.hash` (bcrypt por padrão no Bun).
-- **Sessões Stateful:** O JWT atua como portador do ID da sessão. Para invalidação no logout, a sessão correspondente é deletada da tabela de `sessions` no Postgres. Isso permite que o usuário tenha múltiplas sessões ativas (vários dispositivos).
+- **Fluxo:** `POST /api/auth/login` recebe credenciais → o service valida a senha com `Bun.password.verify` contra o hash do banco → cria uma sessão ativa na tabela `sessions` e emite um JWT contendo o ID da sessão.
+- **Sessões Stateful:** O JWT atua como portador do ID da sessão. Para invalidação no logout, a sessão correspondente é removida da tabela `sessions` no Postgres (gerenciado pelo módulo `users`). Isso permite que o usuário tenha múltiplas sessões ativas (vários dispositivos).
 - **Repositório:** lê e escreve na tabela `users` e na tabela `sessions`.
 
-### 3.2 `acervo`
+### 3.2 `users`
 
-Representa a coleção de topo da hierarquia.
+Gerencia o cadastro, perfis, senhas e encerramento de sessão de usuários.
 
-- CRUD básico com validação de permissão (apenas gestor cria/remove).
-- Campos: `nome`, `descricao`, `instituicao`.
+- **Cadastro:** `POST /api/users/signup` cria um novo usuário com papel padrão `reader`, gerando o hash da senha via `Bun.password.hash` (bcrypt nativo do runtime Bun).
+- **Gerenciamento de Perfil:** Permite a visualização do perfil ativo (`GET /api/users/profile`), atualização dos dados do usuário (`PATCH /api/users/update-profile`) e alteração de senha (`POST /api/users/update-password`).
+- **Logout e Exclusão:** `POST /api/users/signout` encerra a sessão ativa do usuário invalidando seu token JWT (deletando a entrada correspondente da tabela `sessions`). `DELETE /api/users/delete-account` permite a exclusão lógica do usuário (soft delete) e invalidação de todas as suas sessões ativas.
+- **Repositório:** lê e escreve na tabela `users` e manipula registros de `sessions`.
 
-### 3.3 `fonte`
+### 3.3 `sources`
 
-Representa um periódico, livro ou revista dentro de um acervo.
+Representa um periódico, livro ou revista dentro do sistema, opcionalmente associado a uma coleção (`collections`).
 
-- Metadados comuns + metadados específicos por tipo armazenados em coluna `metadata JSONB`.
-- O `tipo` (`jornal | revista | livro`) é validado no service; o schema do JSONB é
-  validado via Zod antes de persistir.
-- Listagem com filtros múltiplos (tipo, acervo, período, idioma, status OCR) — query
-  dinâmica construída com Kysely.
+- CRUD básico com validação de permissões (apenas gestores com papel `manager` podem criar, atualizar ou remover).
+- Metadados gerais + específicos por tipo estruturados e validados via esquema Zod antes de persistir em uma coluna `metadata JSONB` no Postgres.
+- O `type` (`newspaper | magazine | book`) é restrito e validado pela regra de negócio e restrição do banco.
+- Listagem dinâmica (`GET /api/sources/list`) permitindo filtros flexíveis (nome, tipo, idioma, coleção) e ordenação, utilizando o query builder type-safe do Kysely.
 
-### 3.4 `edicao`
+### 3.4 `editions`
 
-Uma edição específica de uma fonte (ex.: Jornal X, edição 42, 15/03/1920).
+Representa uma edição/fascículo específico de uma fonte (ex.: Jornal O Diário do Paraná, Edição 154, publicada em 29/03/1950).
 
-- Vinculada a uma fonte.
-- Expõe status agregado de OCR calculado a partir das páginas filhas.
-- Upload de imagens: controller recebe ZIP ou arquivos avulsos, service delega ao
-  `IStorageAdapter` e registra as páginas com status `aguardando`. O enfileiramento
-  para OCR é responsabilidade da fila de processamento — ver planejamento futuro.
+- Vinculada obrigatoriamente a uma fonte (`source_id`).
+- CRUD básico com validação de permissões de gestor para criação/edição.
+- Listagem de edições associadas a uma fonte específica com ordenação e paginação.
 
 ### 3.5 `pages`
 
-Unidade mínima do acervo. Representa uma imagem digitalizada.
+Representa uma página física digitalizada (imagem) vinculada a uma edição. É a unidade elementar de conteúdo do acervo.
 
-- Armazena: caminho da imagem original, caminhos das versões otimizadas (thumbnail,
-  display), status OCR, score de confiança, dados brutos do OCR (JSONB) e `tsvector`
-  para busca full-text.
-- O `tsvector` é atualizado via trigger Postgres ao receber o texto do OCR.
-- Reprocessamento: o service invalida o status da página para `waiting` e registra
-  uma nova entrada em `ocr_jobs`.
+- **Upload de Imagens:** O controller recebe imagens via multipart form-data (usando Multer com armazenamento em memória), otimiza-as em versões otimizadas de visualização e miniatura (thumbnail) usando a biblioteca Sharp no `ImageProcessor`, e delega o upload físico ao `S3StorageAdapter` para envio ao S3/MinIO.
+- **Integração com OCR:** Ao salvar a página com sucesso (status padrão `'waiting'`), o service dispara de forma assíncrona o agendamento do processo de OCR invocando o `OcrFacade`.
+- **Listagem e Remoção:** Permite listar páginas vinculadas a uma edição gerando URLs públicas temporárias de visualização a partir do S3. A remoção em lote (`POST /api/pages/delete-batch`) limpa os registros correspondentes no banco e remove fisicamente os objetos do S3/MinIO.
 
-### 3.6 `busca`
+### 3.6 `ocr`
 
-Módulo exclusivo de leitura — não escreve nada.
+Módulo interno responsável pela orquestração assíncrona e processamento de reconhecimento óptico de caracteres (OCR).
 
-- Recebe parâmetros (termo, filtros, modalidade), monta a query full-text com
-  `tsvector` + `ts_headline` para snippets e retorna resultados paginados.
-- As coordenadas de bounding box para highlight vêm diretamente da coluna JSONB de OCR.
-- Usa a instância do Kysely injetada diretamente, sem repositório próprio.
+- **Não expõe rotas HTTP diretamente.** A comunicação com outros módulos de domínio é feita estritamente através do `OcrFacade`.
+- **Mensageria com RabbitMQ:** O `OcrService` publica mensagens de agendamento na fila do RabbitMQ. O `OcrConsumer` escuta a fila `ocr_jobs_queue`, recebe as tarefas e aciona o cliente de OCR (`MockOcrClient`) para extrair textos e bounding boxes da imagem da página.
+- **Resiliência e Retentativas:** Caso ocorra falha na execução do processador de OCR, o job é reenviado para uma fila de atraso (delay exchange) do RabbitMQ para retentativa futura, tolerando até 3 tentativas antes de marcar o status do job como `FAILED` e salvar a mensagem de erro.
+- **Persistência de Dados:** Registra e atualiza os históricos em `ocr_jobs` (`PENDING` -> `PROCESSING` -> `COMPLETED` | `FAILED`) e, em caso de sucesso, grava os metadados do OCR (`ocr_raw`), o score de confiança (`ocr_confidence`), e marca a página como `ocr_status = 'completed'`.
+
+### 3.7 `collections` (futuro)
+
+Módulo planejado para o agrupamento de múltiplas fontes (`sources`) sob um tema ou contexto comum de pesquisa.
+
+- **Estratégia de Implementação:** Como o fluxo completo de upload de páginas, otimização de imagens e publicação na fila de processamento assíncrono de OCR era prioritário, optou-se por tornar a implementação de rotas, controladores e serviços de `collections` opcional, sendo postergada para o futuro. Atualmente, a tabela `collections` já está mapeada no esquema do banco de dados e associada opcionalmente às fontes.
 
 ---
 
@@ -194,17 +228,30 @@ Módulo exclusivo de leitura — não escreve nada.
 
 ### Convenções
 
-- Chaves primárias: `UUID` geradas pelo Postgres (`uuidv7()`), ordenadas no tempo.
-- Timestamps: `created_at` e `updated_at` em todas as tabelas, gerenciados por trigger.
-- Soft delete: coluna `deleted_at TIMESTAMPTZ` presente em todas as tabelas atuais para auditoria.
-- Todas as migrations são arquivos TypeScript gerenciados pelo Kysely Migrator.
+- Chaves primárias: `UUID` gerados pelo Postgres (`uuidv7()`), ordenados cronologicamente no tempo de inserção para otimização de índices.
+- Timestamps: `created_at` e `updated_at` presentes em todas as tabelas principais, mantidos automaticamente por triggers Postgres.
+- Soft delete: coluna `deleted_at TIMESTAMPTZ` para exclusão lógica e histórico.
+- Migrações: arquivos puramente TypeScript gerenciados pelo Kysely Migrator.
 
 ### Tabelas
 
 ```sql
--- Usuários
+-- Definição de Perfis de Usuário
 CREATE TYPE user_role AS ENUM ('reader', 'manager');
 
+-- Definição de Status de Jobs de OCR
+CREATE TYPE ocr_job_status AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED');
+
+-- Função utilitária para atualização automática do updated_at
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Usuários
 CREATE TABLE users (
   id            UUID PRIMARY KEY DEFAULT uuidv7(),
   email         VARCHAR(255) UNIQUE NOT NULL,
@@ -214,6 +261,18 @@ CREATE TABLE users (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   deleted_at    TIMESTAMPTZ DEFAULT NULL
+);
+
+CREATE TRIGGER set_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Sessões de Usuário (Stateful)
+CREATE TABLE sessions (
+  id         UUID PRIMARY KEY DEFAULT uuidv7(),
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Coleções (Acervos)
@@ -227,10 +286,14 @@ CREATE TABLE collections (
   deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
 
--- Fontes (livros, revistas, jornais)
+CREATE TRIGGER set_collections_updated_at
+  BEFORE UPDATE ON collections
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Fontes (periódicos, livros, revistas)
 CREATE TABLE sources (
   id            UUID PRIMARY KEY DEFAULT uuidv7(),
-  collection_id UUID REFERENCES collections(id),
+  collection_id UUID REFERENCES collections(id) ON DELETE SET NULL,
   name          VARCHAR(255) NOT NULL,
   type          VARCHAR(10) NOT NULL CHECK (type IN ('newspaper', 'magazine', 'book')),
   language      VARCHAR(50) NOT NULL,
@@ -240,10 +303,14 @@ CREATE TABLE sources (
   deleted_at    TIMESTAMPTZ DEFAULT NULL
 );
 
+CREATE TRIGGER set_sources_updated_at
+  BEFORE UPDATE ON sources
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 -- Edições
 CREATE TABLE editions (
   id           UUID PRIMARY KEY DEFAULT uuidv7(),
-  source_id    UUID NOT NULL REFERENCES sources(id),
+  source_id    UUID NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
   number       VARCHAR(50),
   published_at DATE,
   notes        VARCHAR(5000),
@@ -252,10 +319,14 @@ CREATE TABLE editions (
   deleted_at   TIMESTAMPTZ DEFAULT NULL
 );
 
+CREATE TRIGGER set_editions_updated_at
+  BEFORE UPDATE ON editions
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
 -- Páginas
 CREATE TABLE pages (
-  id                   UUID PRIMARY KEY DEFAULT gen_random_uuidv7(),
-  edition_id           UUID NOT NULL REFERENCES editions(id),
+  id                   UUID PRIMARY KEY DEFAULT uuidv7(),
+  edition_id           UUID NOT NULL REFERENCES editions(id) ON DELETE CASCADE,
   number               INTEGER NOT NULL,
   original_image_path  VARCHAR(255) NOT NULL,
   display_image_path   VARCHAR(255),
@@ -264,24 +335,28 @@ CREATE TABLE pages (
   ocr_confidence       NUMERIC(4,3),
   ocr_raw              JSONB,
   tsv_content          TSVECTOR,
-  deleted_at           TIMESTAMPTZ,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at           TIMESTAMPTZ DEFAULT NULL,
   UNIQUE (edition_id, number)
 );
 
--- Histórico de jobs de OCR (A implementar futuramente)
+CREATE TRIGGER set_pages_updated_at
+  BEFORE UPDATE ON pages
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- Histórico de jobs de OCR
 CREATE TABLE ocr_jobs (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuidv7(),
-  page_id      UUID NOT NULL REFERENCES pages(id),
-  status       VARCHAR(50) NOT NULL,
-  attempt      INTEGER NOT NULL DEFAULT 1,
-  error        TEXT,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-  started_at   TIMESTAMPTZ,
-  completed_at TIMESTAMPTZ,
-  failed_at    TIMESTAMPTZ,
-  last_attempt_at TIMESTAMPTZ TIMESTAMPTZ NOT NULL DEFAULT now()
+  id              UUID PRIMARY KEY DEFAULT uuidv7(),
+  page_id         UUID NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+  status          ocr_job_status NOT NULL,
+  attempt         INTEGER NOT NULL DEFAULT 1,
+  error           TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  processing_at   TIMESTAMPTZ,
+  completed_at    TIMESTAMPTZ,
+  failed_at       TIMESTAMPTZ,
+  last_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
@@ -294,15 +369,16 @@ CREATE INDEX idx_sources_type          ON sources (type);
 CREATE INDEX idx_sources_language      ON sources (language);
 CREATE INDEX idx_editions_source_id    ON editions (source_id);
 CREATE INDEX idx_editions_published_at ON editions (published_at);
-
--- Futuros (quando implementados)
-CREATE INDEX pages_tsv_idx           ON pages USING GIN (tsv_content);
-CREATE INDEX pages_edition_idx        ON pages (edition_id);
-CREATE INDEX pages_status_idx        ON pages (ocr_status);
+CREATE INDEX pages_tsv_idx             ON pages USING GIN (tsv_content);
+CREATE INDEX pages_edition_idx         ON pages (edition_id);
+CREATE INDEX pages_status_idx          ON pages (ocr_status);
 CREATE INDEX sessions_user_id_idx      ON sessions (user_id);
+CREATE INDEX sessions_expires_at_idx   ON sessions (expires_at);
+CREATE INDEX idx_ocr_jobs_page_id      ON ocr_jobs (page_id);
+CREATE INDEX idx_ocr_jobs_status       ON ocr_jobs (status);
 ```
 
-### Trigger para tsvector (Páginas)
+### Trigger para tsvector (Busca Textual em Páginas)
 
 ```sql
 CREATE OR REPLACE FUNCTION atualiza_tsv() RETURNS trigger AS $$
@@ -318,13 +394,11 @@ CREATE TRIGGER tgr_page_tsv
   FOR EACH ROW EXECUTE FUNCTION atualiza_tsv();
 ```
 
-> **Nota:** se o acervo tiver documentos em múltiplos idiomas, o dicionário do
-> `to_tsvector` deve ser dinâmico, lido de `sources.language`. Manter como `'portuguese'`
-> por ora e criar issue para revisão futura.
+> **Nota:** Atualmente, a busca em texto do OCR utiliza por padrão o dicionário `'portuguese'`. Se o acervo contiver fontes em múltiplos idiomas, o dicionário da função `to_tsvector` precisará ser dinâmico, recuperando o idioma mapeado na relação `sources.language`.
 
 ### Kysely — tipagem das tabelas
 
-Os tipos TypeScript do banco são gerados automaticamente a partir da introspecção real do esquema pelo `kysely-codegen`. Eles ficam no arquivo [`src/infra/database/types.ts`](../src/infra/database/types.ts) e a instância do Kysely é tipada com ele (`export const db = new Kysely<DB>(...)`).
+Os tipos TypeScript do banco são gerados automaticamente a partir da introspecção real do esquema pelo `kysely-codegen`. Eles ficam no arquivo [`src/infra/database/types.ts`](file:///home/afmireski/Documentos/BCC/extensao/extensao_leandro/projeto_extensao_biblioteca_digital_api/src/infra/database/types.ts) e a instância do Kysely é tipada com ele (`export const db = new Kysely<DB>(...)`).
 
 **Para regenerar os tipos (após rodar uma nova migration):**
 
