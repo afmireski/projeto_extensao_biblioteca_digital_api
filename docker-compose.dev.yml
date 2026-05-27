@@ -89,11 +89,13 @@ services:
       STORAGE_PATH_STYLE: "true"
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
       OCR_JOB_RETRY_DELAY_MS: 300000
+      SWAGGER_TOKEN: ${SWAGGER_TOKEN:-biblioteca-secreta-token}
     volumes:
       - ./src:/app/src
       - ./tsconfig.json:/app/tsconfig.json
       - ./package.json:/app/package.json
       - ./kysely.config.ts:/app/kysely.config.ts
+      - ./docs:/app/docs
     depends_on:
       postgres:
         condition: service_healthy

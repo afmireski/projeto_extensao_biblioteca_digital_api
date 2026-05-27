@@ -6,10 +6,16 @@ import { makeUsersRouter } from './modules/users/users.router';
 import { makeSourcesRouter } from './modules/sources/sources.router';
 import { makeEditionsRouter } from './modules/editions/editions.router';
 import { makePagesRouter } from './modules/pages/pages.router';
+import { makeDocsRouter } from './modules/docs/docs.router';
 
 export const app = express();
 
 app.use(express.json());
+
+// Mount docs router if SWAGGER_TOKEN is configured
+if (process.env.SWAGGER_TOKEN) {
+  app.use('/docs', makeDocsRouter());
+}
 
 app.use('/api/auth', makeAuthRouter(container.resolve('authController')));
 app.use(

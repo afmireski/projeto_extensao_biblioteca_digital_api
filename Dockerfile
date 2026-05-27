@@ -7,9 +7,10 @@ COPY package.json bun.lockb ./
 # Install dependencies
 RUN bun install --frozen-lockfile
 
-# Copy source code and config files
+# Copy source code, config files, and docs
 COPY tsconfig.json kysely.config.ts ./
 COPY src ./src
+COPY docs ./docs
 
 # Expose the API port
 EXPOSE 3000

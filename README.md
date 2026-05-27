@@ -90,9 +90,9 @@ Você pode iniciar o compose com o atalho do Bun:
 ```bash
 bun run start:dev:docker
 ```
-Ou rodar o comando do Docker Compose diretamente (use `-d` se preferir rodar em segundo plano):
+Ou rodar o comando do Docker Compose diretamente (use `--build` para garantir que novas dependências sejam instaladas na imagem):
 ```bash
-docker compose -f docker-compose.dev.yml up
+docker compose -f docker-compose.dev.yml up --build
 ```
 *(O compose está configurado para aguardar que o banco de dados, storage e filas fiquem totalmente saudáveis. Em seguida, roda automaticamente as migrações de banco, o seed de desenvolvimento e inicia a API na porta `3000`).*
 
@@ -149,6 +149,9 @@ Quando você envia código para o GitHub, o projeto executa pipelines automátic
 Quando a infraestrutura estiver rodando localmente (seja no Setup Híbrido ou no Setup 100% Docker), você poderá acessar os seguintes painéis e utilitários:
 
 *   **API Principal**: `http://localhost:3000`
+*   **Documentação Swagger (Swagger UI)**: [http://localhost:3000/docs](http://localhost:3000/docs)
+    *   *Autenticação*: Token configurado em `SWAGGER_TOKEN` (padrão local: `biblioteca-secreta-token`).
+    *   *Uso*: Interface interativa para visualização e execução de testes em todos os endpoints documentados.
 *   **Console do MinIO (S3 Web UI)**: [http://localhost:9001](http://localhost:9001)
     *   *Credenciais*: `minioadmin` / `minioadmin`
     *   *Uso*: Permite inspecionar visualmente os buckets de imagens (`pages-originals`, `pages-display`, `pages-thumb`).
