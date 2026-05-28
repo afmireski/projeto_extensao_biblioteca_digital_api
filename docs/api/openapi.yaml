@@ -53,6 +53,8 @@ paths:
               required:
                 - email
                 - password
+      security:
+        - {}
   /api/editions/create:
     post:
       operationId: Editions_create
@@ -603,12 +605,7 @@ paths:
         Soft-deletes the authenticated user's account and revokes all sessions.
         Always returns 204, even if the account was already deleted.
         Requires a valid Bearer token.
-      parameters:
-        - name: authorization
-          in: header
-          required: true
-          schema:
-            type: string
+      parameters: []
       responses:
         '204':
           description: 'There is no content to send for this request, but the headers may be useful. '
@@ -626,12 +623,7 @@ paths:
       description: |-
         Returns the profile of the authenticated user.
         Requires a valid Bearer token.
-      parameters:
-        - name: authorization
-          in: header
-          required: true
-          schema:
-            type: string
+      parameters: []
       responses:
         '200':
           description: The request has succeeded.
@@ -659,12 +651,7 @@ paths:
       description: |-
         Revokes the current session (signs out from the current device).
         Requires a valid Bearer token.
-      parameters:
-        - name: authorization
-          in: header
-          required: true
-          schema:
-            type: string
+      parameters: []
       responses:
         '204':
           description: 'There is no content to send for this request, but the headers may be useful. '
@@ -727,6 +714,8 @@ paths:
                 - name
                 - email
                 - password
+      security:
+        - {}
   /api/users/update-password:
     post:
       operationId: Users_updatePassword
@@ -734,12 +723,7 @@ paths:
         Changes the authenticated user's password.
         Revokes all active sessions on success, requiring re-authentication.
         Requires a valid Bearer token.
-      parameters:
-        - name: authorization
-          in: header
-          required: true
-          schema:
-            type: string
+      parameters: []
       responses:
         '204':
           description: 'There is no content to send for this request, but the headers may be useful. '
@@ -785,12 +769,7 @@ paths:
         If the new email conflicts with an existing account, the response is
         still 200 (masked conflict to prevent user enumeration).
         Requires a valid Bearer token.
-      parameters:
-        - name: authorization
-          in: header
-          required: true
-          schema:
-            type: string
+      parameters: []
       responses:
         '200':
           description: The request has succeeded.
@@ -828,6 +807,8 @@ paths:
                   type: string
                 email:
                   type: string
+security:
+  - BearerAuth: []
 components:
   schemas:
     CreateEditionDTO:
@@ -1093,7 +1074,14 @@ components:
       enum:
         - reader
         - manager
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: Bearer
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:{port}
     description: Servidor local de desenvolvimento
-    variables: {}
+    variables:
+      port:
+        default: '3000'
+        description: Local server port

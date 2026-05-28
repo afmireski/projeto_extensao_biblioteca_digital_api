@@ -10,6 +10,7 @@ interface Users {
    * Registers a new user account with role `reader`.
    * Returns the email of the created user.
    */
+  @useAuth(NoAuth)
   @post
   @route("/signup")
   signup(
@@ -36,9 +37,7 @@ interface Users {
    */
   @get
   @route("/profile")
-  profile(
-    @header authorization: string,
-  ): {
+  profile(): {
     @statusCode statusCode: 200;
     @body body: UserProfile;
   } | {
@@ -58,7 +57,6 @@ interface Users {
   @patch
   @route("/update-profile")
   updateProfile(
-    @header authorization: string,
     @body body: {
       name?: string;
       email?: string;
@@ -82,7 +80,6 @@ interface Users {
   @post
   @route("/update-password")
   updatePassword(
-    @header authorization: string,
     @body body: {
       /** Current password. */
       old_password: string;
@@ -108,9 +105,7 @@ interface Users {
    */
   @delete
   @route("/delete-account")
-  deleteAccount(
-    @header authorization: string,
-  ): {
+  deleteAccount(): {
     @statusCode statusCode: 204;
   } | {
     @statusCode statusCode: 401;
@@ -123,9 +118,7 @@ interface Users {
    */
   @post
   @route("/signout")
-  signout(
-    @header authorization: string,
-  ): {
+  signout(): {
     @statusCode statusCode: 204;
   } | {
     @statusCode statusCode: 401;

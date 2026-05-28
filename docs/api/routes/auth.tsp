@@ -10,6 +10,7 @@ interface Auth {
    * Authenticates a user with email and password.
    * Returns a signed JWT along with the user's email and name.
    */
+  @useAuth(NoAuth)
   @post
   @route("/login")
   login(
