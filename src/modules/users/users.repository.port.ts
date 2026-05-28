@@ -1,5 +1,9 @@
 import type { ActiveUser } from './users.types';
 
+/**
+ * Repository interface for managing user data and session life-cycles.
+ * Handles database operations for active users, profile updates, and session revocations.
+ */
 export interface IUserRepository {
   /**
    * Finds an active (non-deleted) user by id.

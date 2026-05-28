@@ -21,6 +21,13 @@ import { z } from 'zod';
 
 const paramIdSchema = z.object({ id: z.string().uuid() });
 
+/**
+ * Factory function to create and configure the Express router for document sources.
+ * Sets up creation, updates, deletion, single resource get, and list endpoints.
+ * @param sourcesController - Controller handling source HTTP request dispatching.
+ * @param authMiddleware - Middleware handling session validation.
+ * @returns Configured Express Router.
+ */
 export const makeSourcesRouter = (
   sourcesController: SourcesController,
   authMiddleware: RequestHandler,

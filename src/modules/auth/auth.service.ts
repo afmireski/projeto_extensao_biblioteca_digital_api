@@ -5,6 +5,10 @@ import { invalidCredentials } from './auth.error';
 import { addDays } from 'date-fns';
 import { logger } from '../../shared/logger';
 
+/**
+ * Service handling authentication operations, specifically user login.
+ * Orchestrates user validation, session generation, and JWT signing.
+ */
 export class AuthService {
   constructor(
     private readonly authRepository: IAuthRepository,

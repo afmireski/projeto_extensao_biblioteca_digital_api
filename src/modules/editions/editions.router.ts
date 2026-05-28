@@ -21,6 +21,13 @@ import { z } from 'zod';
 
 const paramIdSchema = z.object({ id: z.uuid() });
 
+/**
+ * Factory function to create and configure the Express router for source editions.
+ * Sets up endpoints for creation, updates, soft deletion, details, and list.
+ * @param editionsController - Controller handling edition HTTP request routing.
+ * @param authMiddleware - Middleware handling session verification.
+ * @returns Configured Express Router.
+ */
 export const makeEditionsRouter = (
   editionsController: EditionsController,
   authMiddleware: RequestHandler,

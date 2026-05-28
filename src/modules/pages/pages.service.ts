@@ -19,6 +19,10 @@ import { logger } from '../../shared/logger';
 import type { IStorageAdapter } from '../../infra/storage/storage.interface';
 import { randomUUIDv7 } from 'bun';
 
+/**
+ * Service orchestrating page lifecycle actions.
+ * Processes uploaded files, stores them, updates database, schedules OCR, and deletes batch pages.
+ */
 export class PagesService {
   constructor(
     private readonly pagesRepository: IPagesRepository,
@@ -26,6 +30,15 @@ export class PagesService {
     private readonly ocrFacade: OcrFacade,
   ) {}
 
+  /**
+   * Processes a page upload request.
+   * Generates variants (original, display, thumbnail), uploads them to storage,
+   * creates the page database entry, and queues an asynchronous OCR job.
+   * @param editionId - The UUID of the parent edition.
+   * @param file - The uploaded file DTO (Multer file).
+   * @param pageNumber - The page number in sequence.
+   * @returns A promise resolving to the created PageEntity.
+   */
   uploadPage(
     editionId: string,
     file: UploadFileDTO,
@@ -79,7 +92,7 @@ export class PagesService {
       .then((page) => {
         void this.ocrFacade.scheduleOcrJob(page.id).catch((err) => {
           logger.error(
-            { err, pageId: page.id },
+             { err, pageId: page.id },
             'Failed to schedule OCR job asynchronously',
           );
         });
@@ -92,6 +105,14 @@ export class PagesService {
       });
   }
 
+  /**
+   * Retrieves a filtered, ordered, and paginated list of pages.
+   * Enriches display and thumb image paths with public storage URLs.
+   * @param filters - Search filters.
+   * @param order - Ordering criteria.
+   * @param pagination - Pagination bounds.
+   * @returns A promise resolving to the mapped page list result DTO.
+   */
   list(
     filters?: ListPagesFilters,
     order?: ListPagesOrderParams,
@@ -135,6 +156,12 @@ export class PagesService {
       });
   }
 
+  /**
+   * Physically deletes a batch of pages from both database and file storage.
+   * Throws NotFoundError if none of the IDs exist in the database.
+   * @param pageIds - Array of page UUIDs.
+   * @returns A promise resolving to void.
+   */
   deleteBatch(pageIds: string[]): Promise<void> {
     return this.pagesRepository
       .deleteManyByIds(pageIds)

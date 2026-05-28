@@ -16,6 +16,13 @@ import {
 import type { PagesController } from './pages.controller';
 import type { RequestHandler } from 'express';
 
+/**
+ * Factory function to create and configure the Express router for pages.
+ * Handles page uploads, listing pages, and deleting batch files.
+ * @param pagesController - Controller handling page HTTP requests.
+ * @param authMiddleware - Middleware handling session verification.
+ * @returns Configured Express Router.
+ */
 export const makePagesRouter = (
   pagesController: PagesController,
   authMiddleware: RequestHandler,

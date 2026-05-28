@@ -3,6 +3,13 @@ import type { IJwtService } from '../services/jwt.service.port';
 import type { IUserRepository } from '../../modules/users/users.repository.port';
 import { UnauthorizedError } from '../errors/app-errors';
 
+/**
+ * Factory function to create the Express authentication middleware.
+ * Verifies the Bearer JWT token from the Authorization header and fetches the associated active user profile.
+ * @param jwtService - Service for decoding and verifying JWT tokens.
+ * @param userRepository - Repository for verifying active user session credentials.
+ * @returns Express RequestHandler middleware function.
+ */
 export const makeAuthMiddleware = (
   jwtService: IJwtService,
   userRepository: IUserRepository,

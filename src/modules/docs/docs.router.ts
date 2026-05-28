@@ -5,6 +5,11 @@ import fs from 'fs';
 import { absolutePath } from 'swagger-ui-dist';
 import yaml from 'js-yaml';
 
+/**
+ * Factory function to create and configure the Express router for API documentation.
+ * Serves static assets for Swagger UI and handles gated token authentication for access.
+ * @returns Configured Express Router.
+ */
 export const makeDocsRouter = (): Router => {
   const router = Router();
 

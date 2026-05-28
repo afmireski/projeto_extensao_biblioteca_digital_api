@@ -14,9 +14,18 @@ import {
   applyPagination,
 } from '../../infra/database/query-helpers';
 
+/**
+ * Kysely-based database implementation of the pages repository port.
+ * Executes queries on the 'pages' table.
+ */
 export class PagesRepository implements IPagesRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
+  /**
+   * Maps a database row object to the structured PageEntity domain entity.
+   * @param row - The raw query row result.
+   * @returns The parsed PageEntity.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapToPage(row: any): PageEntity {
     return {
@@ -31,6 +40,11 @@ export class PagesRepository implements IPagesRepository {
     };
   }
 
+  /**
+   * Persists a new page in the database.
+   * @param page - The DTO containing paths and parameters.
+   * @returns A promise resolving to the created PageEntity.
+   */
   create(page: CreatePageDTO): Promise<PageEntity> {
     return this.db
       .insertInto('pages')
@@ -40,6 +54,14 @@ export class PagesRepository implements IPagesRepository {
       .then((row) => this.mapToPage(row));
   }
 
+  /**
+   * Lists pages matching filters and pagination.
+   * Defaults ordering to page number ascending.
+   * @param filters - Search filters.
+   * @param order - Directional ordering params.
+   * @param pagination - Limit and offset bounds.
+   * @returns A promise resolving to list of pages and total count.
+   */
   list(
     filters?: ListPagesFilters,
     order?: ListPagesOrderParams,
@@ -90,6 +112,11 @@ export class PagesRepository implements IPagesRepository {
     }));
   }
 
+  /**
+   * Physically deletes multiple page records by their IDs.
+   * @param pageIds - Array of page UUIDs.
+   * @returns A promise resolving to the deleted PageEntity records.
+   */
   deleteManyByIds(pageIds: string[]): Promise<PageEntity[]> {
     return this.db
       .deleteFrom('pages')
@@ -107,6 +134,13 @@ export class PagesRepository implements IPagesRepository {
       .execute();
   }
 
+  /**
+   * Validates if a page can be uploaded to a specific edition.
+   * Checks that the parent edition exists and that page number is not already taken.
+   * @param editionId - Target edition UUID.
+   * @param pageNumber - The sequential page number to check.
+   * @returns A promise resolving to check outcomes.
+   */
   checkIfCanUpload(
     editionId: string,
     pageNumber: number,

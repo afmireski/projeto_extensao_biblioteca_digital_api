@@ -14,6 +14,11 @@ import {
 } from './users.error';
 import { logger } from '../../shared/logger';
 
+/**
+ * Service handling user account management.
+ * Manages user lifecycle including registration (signup), profile retrieval, updates,
+ * password modification, account deletion, and session signout.
+ */
 export class UserService {
   constructor(private readonly userRepository: IUserRepository) {}
 

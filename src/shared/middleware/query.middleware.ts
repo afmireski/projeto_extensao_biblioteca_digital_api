@@ -7,6 +7,11 @@ const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+/**
+ * Middleware factory that parses and validates page/limit query parameters.
+ * Sets `req.pagination` with the page, limit, and calculated offset.
+ * Throws ValidationError if the parameters are invalid.
+ */
 export const parsePagination = (): RequestHandler => (req, res, next) => {
   const result = paginationSchema.safeParse({
     page: req.query.page,
@@ -32,6 +37,11 @@ export const parsePagination = (): RequestHandler => (req, res, next) => {
   next();
 };
 
+/**
+ * Middleware factory that parses the query 'order' parameter.
+ * Supports query objects or raw JSON strings and validates them against the provided Zod schema.
+ * Sets `req.order` with the validated sorting data.
+ */
 export const parseOrder =
   <T extends ZodType>(schema: T): RequestHandler =>
   (req, res, next) => {
@@ -64,6 +74,11 @@ export const parseOrder =
     next();
   };
 
+/**
+ * Middleware factory that parses query search 'filters'.
+ * Supports nested query objects or raw JSON strings and validates them against the provided Zod schema.
+ * Sets `req.filters` with the validated criteria.
+ */
 export const parseFilter =
   <T extends ZodType>(schema: T): RequestHandler =>
   (req, res, next) => {

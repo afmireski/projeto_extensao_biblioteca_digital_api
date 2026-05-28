@@ -4,9 +4,18 @@ import type { IOcrRepository } from './ocr.repository.port';
 import type { OcrJobEntity, CreateOcrJobDTO } from './ocr.types';
 import { InternalError } from '../../shared/errors/app-errors';
 
+/**
+ * Kysely-based database implementation of the OCR jobs repository port.
+ * Executes queries on the 'ocr_jobs' table, joining 'pages' for original file paths.
+ */
 export class OcrRepository implements IOcrRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
+  /**
+   * Finds an OCR job by ID joined with its page info.
+   * @param id - The job UUID.
+   * @returns A promise resolving to the OcrJobEntity, or undefined if not found.
+   */
   findById(id: string): Promise<OcrJobEntity | undefined> {
     return this.db
       .selectFrom('ocr_jobs')
@@ -51,6 +60,11 @@ export class OcrRepository implements IOcrRepository {
       });
   }
 
+  /**
+   * Creates a new OCR job in PENDING status.
+   * @param data - The DTO containing the page ID.
+   * @returns A promise resolving to the created OcrJobEntity.
+   */
   create(data: CreateOcrJobDTO): Promise<OcrJobEntity> {
     return this.db
       .insertInto('ocr_jobs')
@@ -71,6 +85,11 @@ export class OcrRepository implements IOcrRepository {
       });
   }
 
+  /**
+   * Updates an OCR job status to PROCESSING and sets processing date.
+   * @param id - The job UUID.
+   * @returns A promise resolving to the updated OcrJobEntity.
+   */
   markAsProcessing(id: string): Promise<OcrJobEntity> {
     return this.db
       .updateTable('ocr_jobs')
@@ -91,6 +110,11 @@ export class OcrRepository implements IOcrRepository {
       });
   }
 
+  /**
+   * Updates an OCR job status to COMPLETED and sets completion date.
+   * @param id - The job UUID.
+   * @returns A promise resolving to the updated OcrJobEntity.
+   */
   markAsCompleted(id: string): Promise<OcrJobEntity> {
     return this.db
       .updateTable('ocr_jobs')
@@ -110,6 +134,13 @@ export class OcrRepository implements IOcrRepository {
       });
   }
 
+  /**
+   * Increments the attempt counter, registers the error, and sets status to PENDING.
+   * @param id - The job UUID.
+   * @param nextAttempt - Next sequential attempt count.
+   * @param error - Failure error message.
+   * @returns A promise resolving to the updated OcrJobEntity.
+   */
   incrementAttemptAndMarkAsPending(
     id: string,
     nextAttempt: number,
@@ -135,6 +166,12 @@ export class OcrRepository implements IOcrRepository {
       });
   }
 
+  /**
+   * Marks job as FAILED and stores final error message.
+   * @param id - The job UUID.
+   * @param error - The final error message.
+   * @returns A promise resolving to the updated OcrJobEntity.
+   */
   markAsFailed(id: string, error: string): Promise<OcrJobEntity> {
     return this.db
       .updateTable('ocr_jobs')

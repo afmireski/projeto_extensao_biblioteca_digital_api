@@ -8,6 +8,13 @@ import {
   updatePasswordSchema,
 } from './users.schemas';
 
+/**
+ * Factory function to create and configure the Express router for user operations.
+ * Defines endpoints for registration, profile retrieval/update, password change, account deletion, and signout.
+ * @param userController - Controller handling user HTTP request dispatching.
+ * @param authMiddleware - Middleware handling session validation.
+ * @returns Configured Express Router.
+ */
 export const makeUsersRouter = (
   userController: UserController,
   authMiddleware: RequestHandler,

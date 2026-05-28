@@ -17,9 +17,18 @@ import {
   applyPagination,
 } from '../../infra/database/query-helpers';
 
+/**
+ * Kysely-based database implementation of the editions repository port.
+ * Executes queries on the 'editions' table, joining 'sources' when needed.
+ */
 export class EditionsRepository implements IEditionsRepository {
   constructor(private readonly db: Kysely<DB>) {}
 
+  /**
+   * Maps a database row object to the structured Edition domain entity.
+   * @param row - The raw query row result.
+   * @returns The parsed Edition entity.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapToEdition(row: any): Edition {
     return {
@@ -34,6 +43,11 @@ export class EditionsRepository implements IEditionsRepository {
     };
   }
 
+  /**
+   * Maps a database row object to the enriched EditionWithSource domain entity.
+   * @param row - The raw query row result.
+   * @returns The parsed EditionWithSource entity.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapToEditionWithSource(row: any): EditionWithSource {
     return {
@@ -44,6 +58,11 @@ export class EditionsRepository implements IEditionsRepository {
     };
   }
 
+  /**
+   * Creates a new edition in the database.
+   * @param data - The DTO containing source id, number, publish date, and notes.
+   * @returns A promise resolving to the created Edition.
+   */
   create(data: CreateEditionDTO): Promise<Edition> {
     return this.db
       .insertInto('editions')
@@ -58,6 +77,11 @@ export class EditionsRepository implements IEditionsRepository {
       .then((row) => this.mapToEdition(row));
   }
 
+  /**
+   * Finds an active edition by ID joined with its source's metadata.
+   * @param id - The edition UUID.
+   * @returns A promise resolving to the EditionWithSource, or undefined.
+   */
   findById(id: string): Promise<EditionWithSource | undefined> {
     return this.db
       .selectFrom('editions')
@@ -82,6 +106,12 @@ export class EditionsRepository implements IEditionsRepository {
       .then((row) => (row ? this.mapToEditionWithSource(row) : undefined));
   }
 
+  /**
+   * Updates an existing edition in the database.
+   * @param id - The edition UUID.
+   * @param data - The updates to apply.
+   * @returns A promise resolving to the updated Edition, or undefined.
+   */
   update(id: string, data: UpdateEditionDTO): Promise<Edition | undefined> {
     return this.db
       .updateTable('editions')
@@ -98,6 +128,11 @@ export class EditionsRepository implements IEditionsRepository {
       .then((row) => (row ? this.mapToEdition(row) : undefined));
   }
 
+  /**
+   * Soft-deletes an edition.
+   * @param id - The edition UUID.
+   * @returns A promise resolving to true if marked deleted, false otherwise.
+   */
   softDelete(id: string): Promise<boolean> {
     return this.db
       .updateTable('editions')
@@ -108,6 +143,13 @@ export class EditionsRepository implements IEditionsRepository {
       .then((res) => Number(res.numUpdatedRows) > 0);
   }
 
+  /**
+   * Lists editions matching filters, ordering, and pagination.
+   * @param filters - Active search filters.
+   * @param order - Directional ordering.
+   * @param pagination - Page bounds parameters.
+   * @returns A promise resolving to the paginated list results.
+   */
   list(
     filters?: ListEditionsFilters,
     order?: ListEditionsOrderParams,

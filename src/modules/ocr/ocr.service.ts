@@ -5,6 +5,10 @@ import type { OcrJobEntity } from './ocr.types';
 import { logger } from '../../shared/logger';
 import { InternalError } from '../../shared/errors/app-errors';
 
+/**
+ * Service managing OCR jobs.
+ * Handles job scheduling by publishing to queue and actual job execution.
+ */
 export class OcrService {
   constructor(
     private readonly ocrRepository: IOcrRepository,
@@ -12,6 +16,12 @@ export class OcrService {
     private readonly ocrClient: IOcrClient,
   ) {}
 
+  /**
+   * Creates an OCR job and publishes a message to RabbitMQ.
+   * Throws InternalError if the creation or publishing fails.
+   * @param pageId - The page UUID.
+   * @returns A promise resolving to the created OcrJobEntity.
+   */
   scheduleOcrJob(pageId: string): Promise<OcrJobEntity> {
     return this.ocrRepository
       .create({ pageId })
@@ -29,6 +39,13 @@ export class OcrService {
       });
   }
 
+  /**
+   * Processes a scheduled OCR job.
+   * Downloads page image, performs OCR text extraction, and updates job status.
+   * Retries up to 3 times by sending messages back to the queue on failure.
+   * @param jobId - The job UUID.
+   * @param pageId - The page UUID.
+   */
   processOcrJob(jobId: string, pageId: string): Promise<void> {
     return this.ocrRepository
       .findById(jobId)
