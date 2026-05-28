@@ -37,6 +37,29 @@ model UpdateEditionDTO {
   notes?: string;
 }
 
+model EditionFilters {
+  source_id?: {
+    eq?: string;
+  };
+  number?: {
+    eq?: string;
+    ne?: string;
+    like?: string;
+    in?: string[];
+    nin?: string[];
+  };
+  published_at?: {
+    gte?: string;
+    lte?: string;
+  };
+}
+
+model EditionOrder {
+  number?: "asc" | "desc";
+  published_at?: "asc" | "desc";
+  created_at?: "asc" | "desc";
+}
+
 model ListEditionsResult {
   metadata: {
     total: int32;

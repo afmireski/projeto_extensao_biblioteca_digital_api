@@ -25,10 +25,10 @@ interface Users {
     @body body: { email: string };
   } | {
     @statusCode statusCode: 400;
-    @body body: ErrorResponse;
+    @body body: ValidationErrorResponse;
   } | {
     @statusCode statusCode: 409;
-    @body body: ErrorResponse;
+    @body body: ConflictErrorResponse;
   };
 
   /**
@@ -42,10 +42,10 @@ interface Users {
     @body body: UserProfile;
   } | {
     @statusCode statusCode: 401;
-    @body body: ErrorResponse;
+    @body body: UnauthorizedErrorResponse;
   } | {
     @statusCode statusCode: 404;
-    @body body: ErrorResponse;
+    @body body: NotFoundErrorResponse;
   };
 
   /**
@@ -66,10 +66,10 @@ interface Users {
     @body body: { success: boolean };
   } | {
     @statusCode statusCode: 400;
-    @body body: ErrorResponse;
+    @body body: ValidationErrorResponse;
   } | {
     @statusCode statusCode: 401;
-    @body body: ErrorResponse;
+    @body body: UnauthorizedErrorResponse;
   };
 
   /**
@@ -92,10 +92,10 @@ interface Users {
     @statusCode statusCode: 204;
   } | {
     @statusCode statusCode: 400;
-    @body body: ErrorResponse;
+    @body body: ValidationErrorResponse;
   } | {
     @statusCode statusCode: 401;
-    @body body: ErrorResponse;
+    @body body: UnauthorizedErrorResponse;
   };
 
   /**
@@ -109,7 +109,7 @@ interface Users {
     @statusCode statusCode: 204;
   } | {
     @statusCode statusCode: 401;
-    @body body: ErrorResponse;
+    @body body: UnauthorizedErrorResponse;
   };
 
   /**
@@ -122,6 +122,6 @@ interface Users {
     @statusCode statusCode: 204;
   } | {
     @statusCode statusCode: 401;
-    @body body: ErrorResponse;
+    @body body: UnauthorizedErrorResponse;
   };
 }

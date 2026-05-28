@@ -25,9 +25,9 @@ interface Auth {
     @body body: LoginResponse;
   } | {
     @statusCode statusCode: 400;
-    @body body: ErrorResponse;
+    @body body: ValidationErrorResponse;
   } | {
     @statusCode statusCode: 401;
-    @body body: ErrorResponse;
+    @body body: UnauthorizedErrorResponse;
   };
 }

@@ -28,13 +28,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
       tags:
         - auth
       requestBody:
@@ -74,25 +74,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
         '404':
           description: The server cannot find the requested resource.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - Editions
       requestBody:
@@ -123,41 +123,17 @@ paths:
             type: integer
             format: int32
           explode: false
-        - name: number
+        - name: filters
           in: query
           required: false
           schema:
-            type: string
+            $ref: '#/components/schemas/EditionFilters'
           explode: false
-        - name: published_at_gte
+        - name: order
           in: query
           required: false
           schema:
-            type: string
-          explode: false
-        - name: published_at_lte
-          in: query
-          required: false
-          schema:
-            type: string
-          explode: false
-        - name: source_name
-          in: query
-          required: false
-          schema:
-            type: string
-          explode: false
-        - name: source_type
-          in: query
-          required: false
-          schema:
-            type: string
-          explode: false
-        - name: source_language
-          in: query
-          required: false
-          schema:
-            type: string
+            $ref: '#/components/schemas/EditionOrder'
           explode: false
       responses:
         '200':
@@ -171,7 +147,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
       tags:
         - Editions
   /api/editions/{id}:
@@ -199,13 +175,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '404':
           description: The server cannot find the requested resource.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - Editions
   /api/editions/{id}/delete:
@@ -229,19 +205,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
         '404':
           description: The server cannot find the requested resource.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - Editions
   /api/editions/{id}/update:
@@ -269,25 +245,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
         '404':
           description: The server cannot find the requested resource.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - Editions
       requestBody:
@@ -296,105 +272,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateEditionDTO'
-  /api/pages/:
-    get:
-      operationId: PagesRoutes_listByEditionId
-      summary: Listar Páginas por Edição
-      description: Lista todas as páginas de uma edição de forma paginada.
-      parameters:
-        - name: edition_id
-          in: query
-          required: true
-          schema:
-            type: string
-          explode: false
-        - name: page
-          in: query
-          required: false
-          schema:
-            type: integer
-            format: int32
-            default: 1
-          explode: false
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            format: int32
-            default: 50
-          explode: false
-      responses:
-        '200':
-          description: The request has succeeded.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        edition_id:
-                          type: string
-                        number:
-                          type: integer
-                          format: int32
-                        display_image_url:
-                          type: string
-                          nullable: true
-                        thumb_image_url:
-                          type: string
-                          nullable: true
-                        ocr_status:
-                          type: string
-                        ocr_confidence:
-                          type: number
-                          format: float
-                          nullable: true
-                      required:
-                        - id
-                        - edition_id
-                        - number
-                        - display_image_url
-                        - thumb_image_url
-                        - ocr_status
-                        - ocr_confidence
-                  meta:
-                    type: object
-                    properties:
-                      total:
-                        type: integer
-                        format: int32
-                      page:
-                        type: integer
-                        format: int32
-                      limit:
-                        type: integer
-                        format: int32
-                      total_pages:
-                        type: integer
-                        format: int32
-                    required:
-                      - total
-                      - page
-                      - limit
-                      - total_pages
-                required:
-                  - data
-                  - meta
-        '400':
-          description: The server could not understand the request due to invalid syntax.
-        '401':
-          description: Access is unauthorized.
-        '500':
-          description: Server error
-      tags:
-        - Pages
   /api/pages/delete-batch:
     post:
       operationId: PagesRoutes_deleteBatch
@@ -406,14 +283,34 @@ paths:
           description: 'There is no content to send for this request, but the headers may be useful. '
         '400':
           description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
         '404':
           description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalErrorResponse'
       tags:
         - Pages
       requestBody:
@@ -429,6 +326,65 @@ paths:
                     type: string
               required:
                 - page_ids
+  /api/pages/list:
+    get:
+      operationId: PagesRoutes_list
+      summary: Listar Páginas por Edição
+      description: Lista todas as páginas de uma edição de forma paginada.
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+          explode: false
+        - name: filters
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PageFilters'
+          explode: false
+        - name: order
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/PageOrder'
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListPagesResult'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalErrorResponse'
+      tags:
+        - Pages
   /api/pages/upload:
     post:
       operationId: PagesRoutes_upload
@@ -440,12 +396,28 @@ paths:
           description: The request has succeeded and a new resource has been created as a result.
         '400':
           description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalErrorResponse'
       tags:
         - Pages
       requestBody:
@@ -483,10 +455,22 @@ paths:
                 $ref: '#/components/schemas/Source'
         '400':
           description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
       tags:
         - Sources
       requestBody:
@@ -513,6 +497,18 @@ paths:
             type: integer
             format: int32
           explode: false
+        - name: filters
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/SourceFilters'
+          explode: false
+        - name: order
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/SourceOrder'
+          explode: false
       responses:
         '200':
           description: The request has succeeded.
@@ -522,6 +518,10 @@ paths:
                 $ref: '#/components/schemas/ListSourcesResult'
         '401':
           description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
       tags:
         - Sources
   /api/sources/{id}:
@@ -542,8 +542,16 @@ paths:
                 $ref: '#/components/schemas/Source'
         '401':
           description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '404':
           description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - Sources
   /api/sources/{id}/delete:
@@ -560,10 +568,22 @@ paths:
           description: 'There is no content to send for this request, but the headers may be useful. '
         '401':
           description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
         '404':
           description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - Sources
   /api/sources/{id}/update:
@@ -584,12 +604,28 @@ paths:
                 $ref: '#/components/schemas/Source'
         '400':
           description: The server could not understand the request due to invalid syntax.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '403':
           description: Access is forbidden.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForbiddenErrorResponse'
         '404':
           description: The server cannot find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - Sources
       requestBody:
@@ -614,7 +650,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
       tags:
         - users
   /api/users/profile:
@@ -636,13 +672,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
         '404':
           description: The server cannot find the requested resource.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/NotFoundErrorResponse'
       tags:
         - users
   /api/users/signout:
@@ -660,7 +696,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
       tags:
         - users
   /api/users/signup:
@@ -687,13 +723,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '409':
           description: The request conflicts with the current state of the server.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ConflictErrorResponse'
       tags:
         - users
       requestBody:
@@ -732,13 +768,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
       tags:
         - users
       requestBody:
@@ -787,13 +823,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/ValidationErrorResponse'
         '401':
           description: Access is unauthorized.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedErrorResponse'
       tags:
         - users
       requestBody:
@@ -811,6 +847,17 @@ security:
   - BearerAuth: []
 components:
   schemas:
+    ConflictErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      description: Conflict Error
     CreateEditionDTO:
       type: object
       required:
@@ -873,6 +920,56 @@ components:
           type: string
           format: date-time
       description: A single edition of a source (e.g. issue nº 42 of a newspaper).
+    EditionFilters:
+      type: object
+      properties:
+        source_id:
+          type: object
+          properties:
+            eq:
+              type: string
+        number:
+          type: object
+          properties:
+            eq:
+              type: string
+            ne:
+              type: string
+            like:
+              type: string
+            in:
+              type: array
+              items:
+                type: string
+            nin:
+              type: array
+              items:
+                type: string
+        published_at:
+          type: object
+          properties:
+            gte:
+              type: string
+            lte:
+              type: string
+    EditionOrder:
+      type: object
+      properties:
+        number:
+          type: string
+          enum:
+            - asc
+            - desc
+        published_at:
+          type: string
+          enum:
+            - asc
+            - desc
+        created_at:
+          type: string
+          enum:
+            - asc
+            - desc
     EditionWithSource:
       type: object
       required:
@@ -907,7 +1004,22 @@ components:
         source_language:
           type: string
       description: Edition enriched with parent source metadata. Returned by GET /{id}.
-    ErrorResponse:
+    ForbiddenErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          anyOf:
+            - type: string
+              enum:
+                - auth.forbidden
+            - type: string
+        message:
+          type: string
+      description: Forbidden Error
+    InternalErrorResponse:
       type: object
       required:
         - code
@@ -915,11 +1027,11 @@ components:
       properties:
         code:
           type: string
+          enum:
+            - server.internal_error
         message:
           type: string
-        details:
-          type: object
-      description: Standard error response.
+      description: Internal Server Error
     ListEditionsResult:
       type: object
       required:
@@ -946,6 +1058,36 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Edition'
+    ListPagesResult:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Page'
+        meta:
+          type: object
+          properties:
+            total:
+              type: integer
+              format: int32
+            page:
+              type: integer
+              format: int32
+            limit:
+              type: integer
+              format: int32
+            total_pages:
+              type: integer
+              format: int32
+          required:
+            - total
+            - page
+            - limit
+            - total_pages
     ListSourcesResult:
       type: object
       required:
@@ -953,7 +1095,7 @@ components:
         - data
       properties:
         metadata:
-          $ref: '#/components/schemas/Metadata'
+          $ref: '#/components/schemas/SourceMetadata'
         data:
           type: array
           items:
@@ -972,22 +1114,74 @@ components:
         name:
           type: string
       description: Payload returned on successful login.
-    Metadata:
+    NotFoundErrorResponse:
       type: object
       required:
-        - total
-        - page
-        - limit
+        - code
+        - message
       properties:
-        total:
+        code:
+          anyOf:
+            - type: string
+              enum:
+                - resource.not_found
+            - type: string
+        message:
+          type: string
+      description: Not Found Error
+    Page:
+      type: object
+      required:
+        - id
+        - edition_id
+        - number
+        - display_image_url
+        - thumb_image_url
+        - ocr_status
+        - ocr_confidence
+      properties:
+        id:
+          type: string
+        edition_id:
+          type: string
+        number:
           type: integer
           format: int32
-        page:
-          type: integer
-          format: int32
-        limit:
-          type: integer
-          format: int32
+        display_image_url:
+          type: string
+          nullable: true
+        thumb_image_url:
+          type: string
+          nullable: true
+        ocr_status:
+          type: string
+        ocr_confidence:
+          type: number
+          format: float
+          nullable: true
+      description: A single page belonging to an edition, with OCR processing status.
+    PageFilters:
+      type: object
+      properties:
+        edition_id:
+          anyOf:
+            - type: string
+            - type: object
+              properties:
+                eq:
+                  type: string
+                in:
+                  type: array
+                  items:
+                    type: string
+    PageOrder:
+      type: object
+      properties:
+        number:
+          type: string
+          enum:
+            - asc
+            - desc
     Source:
       type: object
       required:
@@ -1020,6 +1214,127 @@ components:
           type: string
         updated_at:
           type: string
+      description: A single source (e.g. a newspaper, magazine, or book).
+    SourceFilters:
+      type: object
+      properties:
+        name:
+          type: object
+          properties:
+            eq:
+              type: string
+            ne:
+              type: string
+            like:
+              type: string
+            in:
+              type: array
+              items:
+                type: string
+            nin:
+              type: array
+              items:
+                type: string
+        type:
+          type: object
+          properties:
+            eq:
+              type: string
+            ne:
+              type: string
+            like:
+              type: string
+            in:
+              type: array
+              items:
+                type: string
+            nin:
+              type: array
+              items:
+                type: string
+        language:
+          type: object
+          properties:
+            eq:
+              type: string
+            ne:
+              type: string
+            like:
+              type: string
+            in:
+              type: array
+              items:
+                type: string
+            nin:
+              type: array
+              items:
+                type: string
+        collection_id:
+          type: object
+          properties:
+            eq:
+              type: string
+            ne:
+              type: string
+            like:
+              type: string
+            in:
+              type: array
+              items:
+                type: string
+            nin:
+              type: array
+              items:
+                type: string
+    SourceMetadata:
+      type: object
+      required:
+        - total
+        - page
+        - limit
+      properties:
+        total:
+          type: integer
+          format: int32
+        page:
+          type: integer
+          format: int32
+        limit:
+          type: integer
+          format: int32
+    SourceOrder:
+      type: object
+      properties:
+        name:
+          type: string
+          enum:
+            - asc
+            - desc
+        type:
+          type: string
+          enum:
+            - asc
+            - desc
+        created_at:
+          type: string
+          enum:
+            - asc
+            - desc
+    UnauthorizedErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          anyOf:
+            - type: string
+              enum:
+                - auth.unauthorized
+            - type: string
+        message:
+          type: string
+      description: Unauthorized Error
     UpdateEditionDTO:
       type: object
       properties:
@@ -1074,6 +1389,24 @@ components:
       enum:
         - reader
         - manager
+    ValidationErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          anyOf:
+            - type: string
+              enum:
+                - input.validation_error
+            - type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: {}
+      description: Bad Request / Validation Error
   securitySchemes:
     BearerAuth:
       type: http

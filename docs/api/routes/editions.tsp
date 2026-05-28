@@ -20,8 +20,17 @@ interface Editions {
     @statusCode statusCode: 201;
     @body edition: BibliotecaDigital.Edition;
   } | {
-    @statusCode statusCode: 400 | 401 | 403 | 404;
-    @body error: BibliotecaDigital.ErrorResponse;
+    @statusCode statusCode: 400;
+    @body error: BibliotecaDigital.ValidationErrorResponse;
+  } | {
+    @statusCode statusCode: 401;
+    @body error: BibliotecaDigital.UnauthorizedErrorResponse;
+  } | {
+    @statusCode statusCode: 403;
+    @body error: BibliotecaDigital.ForbiddenErrorResponse;
+  } | {
+    @statusCode statusCode: 404;
+    @body error: BibliotecaDigital.NotFoundErrorResponse;
   };
 
   /**
@@ -35,8 +44,17 @@ interface Editions {
     @statusCode statusCode: 200;
     @body edition: BibliotecaDigital.Edition;
   } | {
-    @statusCode statusCode: 400 | 401 | 403 | 404;
-    @body error: BibliotecaDigital.ErrorResponse;
+    @statusCode statusCode: 400;
+    @body error: BibliotecaDigital.ValidationErrorResponse;
+  } | {
+    @statusCode statusCode: 401;
+    @body error: BibliotecaDigital.UnauthorizedErrorResponse;
+  } | {
+    @statusCode statusCode: 403;
+    @body error: BibliotecaDigital.ForbiddenErrorResponse;
+  } | {
+    @statusCode statusCode: 404;
+    @body error: BibliotecaDigital.NotFoundErrorResponse;
   };
 
   /**
@@ -49,8 +67,14 @@ interface Editions {
   deleteOp(@path id: string): {
     @statusCode statusCode: 204;
   } | {
-    @statusCode statusCode: 401 | 403 | 404;
-    @body error: BibliotecaDigital.ErrorResponse;
+    @statusCode statusCode: 401;
+    @body error: BibliotecaDigital.UnauthorizedErrorResponse;
+  } | {
+    @statusCode statusCode: 403;
+    @body error: BibliotecaDigital.ForbiddenErrorResponse;
+  } | {
+    @statusCode statusCode: 404;
+    @body error: BibliotecaDigital.NotFoundErrorResponse;
   };
 
   /**
@@ -64,8 +88,11 @@ interface Editions {
     @statusCode statusCode: 200;
     @body edition: BibliotecaDigital.EditionWithSource;
   } | {
-    @statusCode statusCode: 401 | 404;
-    @body error: BibliotecaDigital.ErrorResponse;
+    @statusCode statusCode: 401;
+    @body error: BibliotecaDigital.UnauthorizedErrorResponse;
+  } | {
+    @statusCode statusCode: 404;
+    @body error: BibliotecaDigital.NotFoundErrorResponse;
   };
 
   /**
@@ -78,17 +105,13 @@ interface Editions {
   list(
     @query page?: int32,
     @query limit?: int32,
-    @query `number`?: string,
-    @query published_at_gte?: string,
-    @query published_at_lte?: string,
-    @query source_name?: string,
-    @query source_type?: string,
-    @query source_language?: string,
+    @query filters?: BibliotecaDigital.EditionFilters,
+    @query order?: BibliotecaDigital.EditionOrder,
   ): {
     @statusCode statusCode: 200;
     @body result: BibliotecaDigital.ListEditionsResult;
   } | {
     @statusCode statusCode: 401;
-    @body error: BibliotecaDigital.ErrorResponse;
+    @body error: BibliotecaDigital.UnauthorizedErrorResponse;
   };
 }

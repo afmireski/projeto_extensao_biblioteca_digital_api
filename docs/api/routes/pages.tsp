@@ -1,6 +1,7 @@
 import "@typespec/http";
 import "@typespec/rest";
 import "@typespec/openapi3";
+import "../models/page.tsp";
 
 using TypeSpec.Http;
 using TypeSpec.Rest;
@@ -24,38 +25,40 @@ interface PagesRoutes {
   ): {
     @statusCode statusCode: 201;
   } | {
-    @statusCode statusCode: 400 | 401 | 403 | 500;
+    @statusCode statusCode: 400;
+    @body body: ValidationErrorResponse;
+  } | {
+    @statusCode statusCode: 401;
+    @body body: UnauthorizedErrorResponse;
+  } | {
+    @statusCode statusCode: 403;
+    @body body: ForbiddenErrorResponse;
+  } | {
+    @statusCode statusCode: 500;
+    @body body: InternalErrorResponse;
   };
 
   @summary("Listar Páginas por Edição")
   @doc("Lista todas as páginas de uma edição de forma paginada.")
   @get
-  @route("/")
-  listByEditionId(
-    @query edition_id: string,
-    @query page?: int32 = 1,
-    @query limit?: int32 = 50,
+  @route("/list")
+  list(
+    @query page?: int32,
+    @query limit?: int32,
+    @query filters?: PageFilters,
+    @query order?: PageOrder,
   ): {
     @statusCode statusCode: 200;
-    @body response: {
-      data: {
-        id: string;
-        edition_id: string;
-        number: int32;
-        display_image_url: string | null;
-        thumb_image_url: string | null;
-        ocr_status: string;
-        ocr_confidence: float32 | null;
-      }[];
-      meta: {
-        total: int32;
-        page: int32;
-        limit: int32;
-        total_pages: int32;
-      };
-    };
+    @body response: ListPagesResult;
   } | {
-    @statusCode statusCode: 400 | 401 | 500;
+    @statusCode statusCode: 400;
+    @body body: ValidationErrorResponse;
+  } | {
+    @statusCode statusCode: 401;
+    @body body: UnauthorizedErrorResponse;
+  } | {
+    @statusCode statusCode: 500;
+    @body body: InternalErrorResponse;
   };
 
   @summary("Remover Páginas em Lote")
@@ -69,6 +72,19 @@ interface PagesRoutes {
   ): {
     @statusCode statusCode: 204;
   } | {
-    @statusCode statusCode: 400 | 401 | 403 | 404 | 500;
+    @statusCode statusCode: 400;
+    @body body: ValidationErrorResponse;
+  } | {
+    @statusCode statusCode: 401;
+    @body body: UnauthorizedErrorResponse;
+  } | {
+    @statusCode statusCode: 403;
+    @body body: ForbiddenErrorResponse;
+  } | {
+    @statusCode statusCode: 404;
+    @body body: NotFoundErrorResponse;
+  } | {
+    @statusCode statusCode: 500;
+    @body body: InternalErrorResponse;
   };
 }

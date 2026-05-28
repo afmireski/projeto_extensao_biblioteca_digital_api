@@ -23,9 +23,4 @@ model LoginResponse {
   name: string;
 }
 
-/** Standard error response. */
-model ErrorResponse {
-  code: string;
-  message: string;
-  details?: {};
-}
+

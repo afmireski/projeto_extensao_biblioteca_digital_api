@@ -3,7 +3,10 @@ import "@typespec/rest";
 import "@typespec/openapi3";
 
 import "./models/user.tsp";
+import "./models/errors.tsp";
+import "./models/source.tsp";
 import "./models/edition.tsp";
+import "./models/page.tsp";
 import "./routes/auth.tsp";
 import "./routes/users.tsp";
 import "./routes/sources.tsp";
