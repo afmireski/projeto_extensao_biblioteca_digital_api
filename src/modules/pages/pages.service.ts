@@ -92,7 +92,7 @@ export class PagesService {
       .then((page) => {
         void this.ocrFacade.scheduleOcrJob(page.id).catch((err) => {
           logger.error(
-             { err, pageId: page.id },
+            { err, pageId: page.id },
             'Failed to schedule OCR job asynchronously',
           );
         });

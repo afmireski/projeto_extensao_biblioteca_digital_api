@@ -1,4 +1,5 @@
 import express from 'express';
+import { corsMiddleware } from './shared/middleware/cors.middleware';
 import { container } from './container';
 import { errorMiddleware } from './shared/middleware/error.middleware';
 import { makeAuthRouter } from './modules/auth/auth.router';
@@ -10,6 +11,7 @@ import { makeDocsRouter } from './modules/docs/docs.router';
 
 export const app = express();
 
+app.use(corsMiddleware());
 app.use(express.json());
 
 // Mount docs router if SWAGGER_TOKEN is configured

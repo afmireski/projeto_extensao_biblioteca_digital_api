@@ -27,3 +27,30 @@ When a request body or query parameter has compound words, define two schemas:
 2. **Internal schema** (the exported `*Schema`): wraps the HTTP schema with a `.transform()` that converts to the `camelCase` DTO (e.g., `sourceId`, `publishedAt`).
 
 The `validateBody` middleware runs the schema and overwrites `req.body` with the transformed output, so the controller and service always see `camelCase` internally.
+
+## JSDoc Documentation Standard
+
+All shared services, middlewares, and utility functions in this folder must be thoroughly documented using JSDoc. This ensures a clean handoff and high code maintainability.
+
+The JSDoc blocks must include:
+1. **Clear Description**: A brief explanation of the component's purpose and logic flow (e.g. environment variables read, errors thrown).
+2. **Parameters (`@param`)**: Named explanation of each parameter.
+3. **Return Type (`@returns`)**: Explanation of the returned value.
+
+### Standard Middleware Example:
+```typescript
+/**
+ * Factory function to create the Express authentication middleware.
+ * Verifies the Bearer JWT token from the Authorization header and fetches the associated active user profile.
+ * @param jwtService - Service for decoding and verifying JWT tokens.
+ * @param userRepository - Repository for verifying active user session credentials.
+ * @returns Express RequestHandler middleware function.
+ */
+export const makeAuthMiddleware = (
+  jwtService: IJwtService,
+  userRepository: IUserRepository,
+): RequestHandler => {
+  // ...
+};
+```
+

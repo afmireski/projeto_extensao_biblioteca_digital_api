@@ -332,4 +332,13 @@ Para evitar acoplamento forte entre diferentes módulos de domínio, a comunica�
 
 ---
 
+## 17. Padrão de documentação de código — JSDoc
+
+Toda a lógica compartilhada, middlewares globais, serviços e facades devem ser devidamente documentados utilizando a especificação do **JSDoc**.
+A documentação JSDoc deve descrever detalhadamente o comportamento do componente, o significado de seus parâmetros (`@param`) e os detalhes de retorno (`@returns`), servindo como guia claro para a manutenibilidade do projeto.
+
+Para exemplos estruturais de JSDoc em utilitários e middlewares, consulte **[src/shared/AGENTS.md](file:///home/afmireski/Documentos/BCC/extensao/extensao_leandro/projeto_extensao_biblioteca_digital_api/src/shared/AGENTS.md)**.
+
+---
+
 _Documento vivo — atualizar conforme novas decisões forem tomadas._
