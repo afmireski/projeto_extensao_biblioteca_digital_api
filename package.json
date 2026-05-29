@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start:dev": "bun run --hot src/server.ts",
-    "start:dev:debug": "bun run --hot --inspect src/server.ts",
+    "start:dev:debug": "bun --watch --watch-directories=src --inspect-wait=localhost:6499/ run  src/server.ts",
     "start:dev:docker": "docker compose -f docker-compose.dev.yml up --build",
     "db:codegen": "kysely-codegen",
     "docs:compile": "tsp compile docs/api/main.tsp",

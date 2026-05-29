@@ -15,15 +15,9 @@ export const deleteBatchSchema = z.object({
 });
 
 export const pageFilterSchema = z.object({
-  edition_id: z
-    .union([
-      z.uuid(),
-      z.object({
-        eq: z.uuid().optional(),
-        in: z.array(z.uuid()).optional(),
-      }),
-    ])
-    .optional(),
+  edition_id: z.object({
+    eq: z.uuid('ID da edição inválido'),
+  }),
 });
 
 export const pageOrderSchema = z.object({

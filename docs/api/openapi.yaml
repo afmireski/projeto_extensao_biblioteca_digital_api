@@ -1162,18 +1162,16 @@ components:
       description: A single page belonging to an edition, with OCR processing status.
     PageFilters:
       type: object
+      required:
+        - edition_id
       properties:
         edition_id:
-          anyOf:
-            - type: string
-            - type: object
-              properties:
-                eq:
-                  type: string
-                in:
-                  type: array
-                  items:
-                    type: string
+          type: object
+          properties:
+            eq:
+              type: string
+          required:
+            - eq
     PageOrder:
       type: object
       properties:

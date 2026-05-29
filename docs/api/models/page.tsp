@@ -14,9 +14,8 @@ model Page {
 }
 
 model PageFilters {
-  edition_id?: string | {
-    eq?: string;
-    in?: string[];
+  edition_id: {
+    eq: string;
   };
 }
 

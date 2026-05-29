@@ -26,7 +26,7 @@ export interface CreatePageDTO {
 }
 
 export interface ListPagesFilters {
-  edition_id?: FilterRelation<string>;
+  edition_id: FilterRelation<string>;
 }
 
 export type ListPagesOrderParams = Partial<Record<'number', 'asc' | 'desc'>>;

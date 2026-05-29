@@ -82,13 +82,10 @@ export const parseOrder =
 export const parseFilter =
   <T extends ZodType>(schema: T): RequestHandler =>
   (req, res, next) => {
-    if (!req.query.filters) {
-      req.filters = {};
-      return next();
-    }
-
     let filterData = req.query.filters;
-    if (typeof filterData === 'string') {
+    if (!filterData) {
+      filterData = {};
+    } else if (typeof filterData === 'string') {
       try {
         filterData = JSON.parse(filterData);
       } catch (err) {

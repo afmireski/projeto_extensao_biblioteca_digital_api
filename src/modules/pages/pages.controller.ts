@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ValidationError } from '../../shared/errors/app-errors';
 import type { PagesService } from './pages.service';
-import type { UploadFileDTO } from './pages.types';
+import type { UploadFileDTO, ListPagesFilters } from './pages.types';
 
 /**
  * Controller handling HTTP endpoints for managing pages.
@@ -53,7 +53,11 @@ export class PagesController {
    */
   list = (req: Request, res: Response, next: NextFunction): void => {
     this.pagesService
-      .list(req.filters, req.order, req.pagination)
+      .list(
+        req.filters as unknown as ListPagesFilters,
+        req.order,
+        req.pagination,
+      )
       .then((data) => {
         res.status(200).json(data);
       })
