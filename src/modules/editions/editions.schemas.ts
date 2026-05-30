@@ -6,15 +6,17 @@ import {
 } from '../../shared/schemas/query.schemas';
 
 // HTTP schema — snake_case input at the API boundary
-export const createEditionHttpSchema = z.object({
-  source_id: z.uuid(),
-  number: z.string().min(1).max(50).optional(),
-  published_at: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'published_at must be in YYYY-MM-DD format')
-    .optional(),
-  notes: z.string().min(1).max(5000).optional(),
-});
+export const createEditionHttpSchema = z
+  .object({
+    source_id: z.uuid(),
+    number: z.string().min(1).max(50).optional(),
+    published_at: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'published_at must be in YYYY-MM-DD format')
+      .optional(),
+    notes: z.string().min(1).max(5000).optional(),
+  })
+  .strict();
 
 // Internal DTO schema — camelCase as used by the service layer
 export const createEditionSchema = createEditionHttpSchema.transform(
@@ -27,14 +29,16 @@ export const createEditionSchema = createEditionHttpSchema.transform(
 );
 
 // HTTP schema — snake_case input at the API boundary
-export const updateEditionHttpSchema = z.object({
-  number: z.string().min(1).max(50).optional(),
-  published_at: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'published_at must be in YYYY-MM-DD format')
-    .optional(),
-  notes: z.string().min(1).max(5000).optional(),
-});
+export const updateEditionHttpSchema = z
+  .object({
+    number: z.string().min(1).max(50).optional(),
+    published_at: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'published_at must be in YYYY-MM-DD format')
+      .optional(),
+    notes: z.string().min(1).max(5000).optional(),
+  })
+  .strict();
 
 // Internal DTO schema — camelCase as used by the service layer
 export const updateEditionSchema = updateEditionHttpSchema.transform(
@@ -45,14 +49,18 @@ export const updateEditionSchema = updateEditionHttpSchema.transform(
   }),
 );
 
-export const editionFilterSchema = z.object({
-  source_id: equalFilterTextSchema,
-  number: filterTextSchema.optional(),
-  published_at: filterDateSchema.optional(),
-});
+export const editionFilterSchema = z
+  .object({
+    source_id: equalFilterTextSchema,
+    number: filterTextSchema.optional(),
+    published_at: filterDateSchema.optional(),
+  })
+  .strict();
 
-export const editionOrderSchema = z.object({
-  number: z.enum(['asc', 'desc']).optional(),
-  published_at: z.enum(['asc', 'desc']).optional(),
-  created_at: z.enum(['asc', 'desc']).optional(),
-});
+export const editionOrderSchema = z
+  .object({
+    number: z.enum(['asc', 'desc']).optional(),
+    published_at: z.enum(['asc', 'desc']).optional(),
+    created_at: z.enum(['asc', 'desc']).optional(),
+  })
+  .strict();
