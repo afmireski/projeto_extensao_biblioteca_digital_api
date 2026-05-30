@@ -39,7 +39,7 @@ describe('EditionsService', () => {
     id,
     source_id: fakeSourceId,
     number: '42',
-    published_at: mockDate,
+    published_at: '2026-05-29',
     notes: null,
     created_at: mockDate,
     updated_at: mockDate,

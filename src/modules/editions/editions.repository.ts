@@ -17,6 +17,8 @@ import {
   applyPagination,
 } from '../../infra/database/query-helpers';
 
+import { formatToDateStr } from '../../shared/utils/date';
+
 /**
  * Kysely-based database implementation of the editions repository port.
  * Executes queries on the 'editions' table, joining 'sources' when needed.
@@ -35,7 +37,10 @@ export class EditionsRepository implements IEditionsRepository {
       id: row.id,
       source_id: row.source_id,
       number: row.number ?? null,
-      published_at: row.published_at ? new Date(row.published_at) : null,
+      published_at: formatToDateStr(
+        row.published_at ? new Date(row.published_at) : null,
+        'yyyy-MM-dd',
+      ),
       notes: row.notes ?? null,
       created_at: new Date(row.created_at),
       updated_at: new Date(row.updated_at),

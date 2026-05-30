@@ -186,7 +186,9 @@ describeE2E('Pages E2E Tests', () => {
       .executeTakeFirst();
 
     const listRes = await fetch(
-      `http://localhost:3001/api/pages/list?filter[edition_id]=${editionId}`,
+      `http://localhost:3001/api/pages/list?filters=${encodeURIComponent(
+        JSON.stringify({ edition_id: { eq: editionId } }),
+      )}`,
       {
         headers: { Authorization: `Bearer ${managerToken}` },
       },
@@ -234,6 +236,7 @@ describeE2E('Pages E2E Tests', () => {
           Authorization: `Bearer ${managerToken}`,
         },
         body: JSON.stringify({
+          edition_id: editionId,
           page_ids: [page!.id],
         }),
       },

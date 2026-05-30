@@ -32,11 +32,15 @@ export interface IPagesRepository {
   ): Promise<{ data: PageEntity[]; total: number }>;
 
   /**
-   * Physically deletes multiple page records by their IDs.
+   * Physically deletes multiple page records by their IDs and edition ID.
+   * @param editionId - The UUID of the edition.
    * @param pageIds - Array of page UUIDs.
    * @returns A promise resolving to the list of deleted PageEntity records.
    */
-  deleteManyByIds(pageIds: string[]): Promise<PageEntity[]>;
+  deleteManyByIdsAndEditionId(
+    editionId: string,
+    pageIds: string[],
+  ): Promise<PageEntity[]>;
 
   /**
    * Performs check validations (checks parent existence and page number conflicts) before upload.

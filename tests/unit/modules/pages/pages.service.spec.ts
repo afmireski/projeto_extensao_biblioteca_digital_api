@@ -45,7 +45,7 @@ describe('PagesService', () => {
   let pagesRepositoryMock: IPagesRepository & {
     create: ReturnType<typeof mock>;
     list: ReturnType<typeof mock>;
-    deleteManyByIds: ReturnType<typeof mock>;
+    deleteManyByIdsAndEditionId: ReturnType<typeof mock>;
     checkIfCanUpload: ReturnType<typeof mock>;
   };
   let storageAdapterMock: IStorageAdapter & {
@@ -60,14 +60,14 @@ describe('PagesService', () => {
     pagesRepositoryMock = {
       create: mock(() => Promise.resolve({} as PageEntity)),
       list: mock(() => Promise.resolve({ data: [], total: 0 })),
-      deleteManyByIds: mock(() => Promise.resolve([])),
+      deleteManyByIdsAndEditionId: mock(() => Promise.resolve([])),
       checkIfCanUpload: mock(() =>
         Promise.resolve({ hasEdition: true, pageNumberConflicts: false }),
       ),
     } as unknown as IPagesRepository & {
       create: ReturnType<typeof mock>;
       list: ReturnType<typeof mock>;
-      deleteManyByIds: ReturnType<typeof mock>;
+      deleteManyByIdsAndEditionId: ReturnType<typeof mock>;
       checkIfCanUpload: ReturnType<typeof mock>;
     };
 
@@ -219,7 +219,7 @@ describe('PagesService', () => {
   describe('deleteBatch', () => {
     it('deve deletar páginas e remover do storage com sucesso', async () => {
       const editionId = 'b0400000-0000-7000-8000-000000000000';
-      pagesRepositoryMock.deleteManyByIds.mockResolvedValue([
+      pagesRepositoryMock.deleteManyByIdsAndEditionId.mockResolvedValue([
         {
           id: '1',
           number: 1,
@@ -232,17 +232,20 @@ describe('PagesService', () => {
         },
       ]);
 
-      await pagesService.deleteBatch(['1']);
+      await pagesService.deleteBatch(editionId, ['1']);
 
-      expect(pagesRepositoryMock.deleteManyByIds).toHaveBeenCalledWith(['1']);
+      expect(
+        pagesRepositoryMock.deleteManyByIdsAndEditionId,
+      ).toHaveBeenCalledWith(editionId, ['1']);
       expect(storageAdapterMock.delete).toHaveBeenCalledTimes(3); // original, display, thumb
     });
 
     it('deve lançar NotFoundError se nenhuma página for deletada', () => {
-      pagesRepositoryMock.deleteManyByIds.mockResolvedValue([]);
+      const editionId = 'b0400000-0000-7000-8000-000000000000';
+      pagesRepositoryMock.deleteManyByIdsAndEditionId.mockResolvedValue([]);
 
       return expectError(
-        pagesService.deleteBatch(['1']),
+        pagesService.deleteBatch(editionId, ['1']),
         NotFoundError,
         'pages.pages_not_found',
       ).then(() => {

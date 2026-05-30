@@ -121,7 +121,9 @@ describeE2E('Editions E2E Tests', () => {
     );
 
     const listRes = await fetch(
-      `http://localhost:3001/api/editions/list?filter[source_id]=${sourceId}`,
+      `http://localhost:3001/api/editions/list?filters=${encodeURIComponent(
+        JSON.stringify({ source_id: { eq: sourceId } }),
+      )}`,
       {
         headers: { Authorization: `Bearer ${managerToken}` },
       },

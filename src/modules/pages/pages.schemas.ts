@@ -12,6 +12,7 @@ export const uploadPageSchema = z
 
 export const deleteBatchSchema = z
   .object({
+    edition_id: z.uuid('ID da edição inválido'),
     page_ids: z
       .array(z.uuid('ID da página inválido'))
       .min(1, 'Nenhuma página fornecida'),

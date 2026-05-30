@@ -67,6 +67,7 @@ interface PagesRoutes {
   @route("/delete-batch")
   deleteBatch(
     @body _: {
+      edition_id: string;
       page_ids: string[];
     }
   ): {

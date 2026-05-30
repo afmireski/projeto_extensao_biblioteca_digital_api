@@ -159,12 +159,13 @@ export class PagesService {
   /**
    * Physically deletes a batch of pages from both database and file storage.
    * Throws NotFoundError if none of the IDs exist in the database.
+   * @param editionId - The UUID of the parent edition.
    * @param pageIds - Array of page UUIDs.
    * @returns A promise resolving to void.
    */
-  deleteBatch(pageIds: string[]): Promise<void> {
+  deleteBatch(editionId: string, pageIds: string[]): Promise<void> {
     return this.pagesRepository
-      .deleteManyByIds(pageIds)
+      .deleteManyByIdsAndEditionId(editionId, pageIds)
       .then((deletedPages) => {
         if (deletedPages.length === 0) {
           throw pagesNotFound();

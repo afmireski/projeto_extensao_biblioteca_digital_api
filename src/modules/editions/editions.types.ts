@@ -2,7 +2,7 @@ export interface Edition {
   id: string;
   source_id: string;
   number: string | null;
-  published_at: Date | null;
+  published_at: string | null;
   notes: string | null;
   created_at: Date;
   updated_at: Date;

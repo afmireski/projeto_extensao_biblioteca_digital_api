@@ -113,14 +113,19 @@ export class PagesRepository implements IPagesRepository {
   }
 
   /**
-   * Physically deletes multiple page records by their IDs.
+   * Physically deletes multiple page records by their IDs and edition ID.
+   * @param editionId - The UUID of the edition.
    * @param pageIds - Array of page UUIDs.
    * @returns A promise resolving to the deleted PageEntity records.
    */
-  deleteManyByIds(pageIds: string[]): Promise<PageEntity[]> {
+  deleteManyByIdsAndEditionId(
+    editionId: string,
+    pageIds: string[],
+  ): Promise<PageEntity[]> {
     return this.db
       .deleteFrom('pages')
       .where('id', 'in', pageIds)
+      .where('edition_id', '=', editionId)
       .returning([
         'id',
         'edition_id',

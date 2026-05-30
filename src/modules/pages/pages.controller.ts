@@ -72,9 +72,9 @@ export class PagesController {
    * @param next - Express next middleware callback.
    */
   deleteBatch = (req: Request, res: Response, next: NextFunction): void => {
-    const { page_ids } = req.body;
+    const { page_ids, edition_id } = req.body;
     this.pagesService
-      .deleteBatch(page_ids)
+      .deleteBatch(edition_id, page_ids)
       .then(() => {
         res.status(204).send();
       })

@@ -98,12 +98,17 @@ describe('PagesController', () => {
 
   describe('deleteBatch', () => {
     it('deve processar deleção com sucesso', async () => {
-      req.body = { page_ids: ['b0400000-0000-7000-8000-000000000000'] };
+      const editionId = 'b0400000-0000-7000-8000-000000000000';
+      const pageId = 'b0400000-0000-7000-8000-000000000001';
+      req.body = {
+        edition_id: editionId,
+        page_ids: [pageId],
+      };
 
       await pagesController.deleteBatch(req as Request, res as Response, next);
 
-      expect(pagesServiceMock.deleteBatch).toHaveBeenCalledWith([
-        'b0400000-0000-7000-8000-000000000000',
+      expect(pagesServiceMock.deleteBatch).toHaveBeenCalledWith(editionId, [
+        pageId,
       ]);
       expect(res.status).toHaveBeenCalledWith(204);
       expect(res.send).toHaveBeenCalled();

@@ -320,11 +320,14 @@ paths:
             schema:
               type: object
               properties:
+                edition_id:
+                  type: string
                 page_ids:
                   type: array
                   items:
                     type: string
               required:
+                - edition_id
                 - page_ids
   /api/pages/list:
     get:
